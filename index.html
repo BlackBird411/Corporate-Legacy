@@ -10,8 +10,8 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <!-- Babel lets us write JSX directly in this file and have the browser compile it -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<!-- Supabase JS client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Supabase JS client (standalone IIFE build — safe inside a plain <script> tag) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
   :root {
@@ -65,6 +65,9 @@
 
 // =========================================================
 // CONFIG — fill these in before deploying.
+// IMPORTANT: use the "anon" / "public" key from Supabase
+// Project Settings -> API, NOT the service_role key.
+// The service_role key must never appear in client-side code.
 // =========================================================
 const SUPABASE_URL = "https://ngfkmluzrgbphgowrrul.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZmttbHV6cmdicGhnb3dycnVsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mjk3NjYzNiwiZXhwIjoyMDk4NTUyNjM2fQ.ePfpWYHEkWK8RslEmvs0w4734PNfsIbY-TlFhYRx9nQ"; // Project Settings → API → anon/public key
