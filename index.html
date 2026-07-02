@@ -10,8 +10,6 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <!-- Babel lets us write JSX directly in this file and have the browser compile it -->
 <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
-<!-- Supabase JS client -->
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
   :root {
@@ -64,23 +62,20 @@
 <script type="text/babel" data-presets="react">
 
 // =========================================================
-// CONFIG — fill these in before deploying.
-// IMPORTANT: use the "anon" / "public" key from Supabase
-// Project Settings -> API, NOT the service_role key.
-// The service_role key must never appear in client-side code.
+// CONFIG — fill this in before deploying.
 // =========================================================
 const SUPABASE_URL = "https://ngfkmluzrgbphgowrrul.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZmttbHV6cmdicGhnb3dycnVsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mjk3NjYzNiwiZXhwIjoyMDk4NTUyNjM2fQ.ePfpWYHEkWK8RslEmvs0w4734PNfsIbY-TlFhYRx9nQ"; // Project Settings → API → anon/public key
 const FUNCTION_URL = SUPABASE_URL + "/functions/v1/trigger-admin-action";
+const LIST_ACTIONS_URL = SUPABASE_URL + "/functions/v1/list-actions";
 
 const { useState, useEffect, useCallback } = React;
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login";
 
 // =========================================================
 // Login
 // =========================================================
-function Login() {
-  const [email, setEmail] = useState("");
+function Login({ onLoginSuccess }) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -89,10 +84,22 @@ function Login() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (authError) {
-      setError(authError.message === "Invalid login credentials" ? "Wrong email or password." : authError.message);
+    try {
+      const res = await fetch(LOGIN_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const json = await res.json();
+      setLoading(false);
+      if (!res.ok || json.error) {
+        setError(json.error || "Wrong username or password.");
+        return;
+      }
+      onLoginSuccess(json.token, json.admin);
+    } catch (err) {
+      setLoading(false);
+      setError("Network error reaching the login function. Try again.");
     }
   }
 
@@ -104,17 +111,17 @@ function Login() {
         <p style={s.sub}>Sign in with your operator credentials.</p>
         <form onSubmit={handleSubmit} style={s.form}>
           <label style={s.label}>
-            Email
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus style={s.input} placeholder="you@example.com" />
+            Username
+            <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={s.input} placeholder="username" autoComplete="username" />
           </label>
           <label style={s.label}>
             Password
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={s.input} placeholder="••••••••" />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={s.input} placeholder="••••••••" autoComplete="current-password" />
           </label>
           {error && <div style={s.errorBox}>{error}</div>}
           <button type="submit" disabled={loading} style={s.primaryButton}>{loading ? "Signing in…" : "Sign in"}</button>
         </form>
-        <p style={s.footnote}>Accounts are provisioned manually in Supabase. Contact the project owner for access.</p>
+        <p style={s.footnote}>Accounts are provisioned manually by the project owner.</p>
       </div>
     </div>
   );
@@ -130,7 +137,7 @@ const ACTION_TYPES = [
   { value: "add_xp", label: "Add XP", field: "delta", verb: "Grant XP" },
 ];
 
-function ActionForm({ onActionComplete }) {
+function ActionForm({ onActionComplete, token }) {
   const [robloxUserId, setRobloxUserId] = useState("");
   const [robloxUsername, setRobloxUsername] = useState("");
   const [actionType, setActionType] = useState("set_credits");
@@ -184,8 +191,6 @@ function ActionForm({ onActionComplete }) {
 
     setSubmitting(true);
     try {
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      const token = sessionData && sessionData.session && sessionData.session.access_token;
       if (!token) {
         setResult({ ok: false, message: "Your session expired — please sign in again." });
         setSubmitting(false);
@@ -275,25 +280,31 @@ const ACTION_LABELS = {
   add_xp: "Grant XP",
 };
 
-function ActionHistory({ refreshSignal }) {
+function ActionHistory({ refreshSignal, token }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error: fetchError } = await supabaseClient
-      .from("admin_actions")
-      .select("id, roblox_user_id, roblox_username, action_type, payload, reason, status, delivery_method, created_at")
-      .order("created_at", { ascending: false })
-      .limit(30);
-
-    if (fetchError) { setError(fetchError.message); }
-    else { setRows(data || []); setError(null); }
+    try {
+      const res = await fetch(LIST_ACTIONS_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(json.error || "Failed to load history.");
+      } else {
+        setRows(json.actions || []);
+        setError(null);
+      }
+    } catch (err) {
+      setError("Network error loading history.");
+    }
     setLoading(false);
-  }, []);
+  }, [token]);
 
-  useEffect(() => { load(); }, [load, refreshSignal]);
+  useEffect(() => { if (token) load(); }, [load, refreshSignal, token]);
 
   function formatAmount(row) {
     const p = row.payload || {};
@@ -340,30 +351,28 @@ function ActionHistory({ refreshSignal }) {
 // App shell — auth + admin allowlist gate
 // =========================================================
 function App() {
-  const [session, setSession] = useState(undefined);
-  const [adminRow, setAdminRow] = useState(undefined);
+  const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") || null);
+  const [adminInfo, setAdminInfo] = useState(() => {
+    const raw = sessionStorage.getItem("admin_info");
+    return raw ? JSON.parse(raw) : null;
+  });
   const [refreshSignal, setRefreshSignal] = useState(0);
 
-  useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: listener } = supabaseClient.auth.onAuthStateChange((_e, newSession) => setSession(newSession));
-    return () => listener.subscription.unsubscribe();
+  const handleLoginSuccess = useCallback((newToken, admin) => {
+    sessionStorage.setItem("admin_token", newToken);
+    sessionStorage.setItem("admin_info", JSON.stringify(admin));
+    setToken(newToken);
+    setAdminInfo(admin);
   }, []);
 
-  useEffect(() => {
-    if (!session) { setAdminRow(session === null ? null : undefined); return; }
-    let cancelled = false;
-    supabaseClient.from("admins").select("id, username, role").eq("auth_user_id", session.user.id).single()
-      .then(({ data, error }) => { if (!cancelled) setAdminRow(error ? null : data); });
-    return () => { cancelled = true; };
-  }, [session]);
+  const handleSignOut = useCallback(() => {
+    sessionStorage.removeItem("admin_token");
+    sessionStorage.removeItem("admin_info");
+    setToken(null);
+    setAdminInfo(null);
+  }, []);
 
-  const handleSignOut = useCallback(() => { supabaseClient.auth.signOut(); }, []);
-
-  if (session === undefined) return <Centered text="Loading…" />;
-  if (!session) return <Login />;
-  if (adminRow === undefined) return <Centered text="Checking access…" />;
-  if (adminRow === null) return <Centered text="Your account isn't provisioned as an admin. Ask the project owner to add you in Supabase." showSignOut onSignOut={handleSignOut} />;
+  if (!token || !adminInfo) return <Login onLoginSuccess={handleLoginSuccess} />;
 
   return (
     <div style={s.page}>
@@ -373,28 +382,19 @@ function App() {
           <h1 style={s.pageTitle}>Admin Console</h1>
         </div>
         <div style={s.headerRight}>
-          <span style={s.whoami}>{adminRow.username} · {adminRow.role}</span>
+          <span style={s.whoami}>{adminInfo.username} · {adminInfo.role}</span>
           <button onClick={handleSignOut} style={s.secondaryButton}>Sign out</button>
         </div>
       </header>
       <main style={s.main}>
         <section style={s.panelBox}>
           <h2 style={s.panelTitle}>Edit player data</h2>
-          <ActionForm onActionComplete={() => setRefreshSignal(n => n + 1)} />
+          <ActionForm token={token} onActionComplete={() => setRefreshSignal(n => n + 1)} />
         </section>
         <section style={s.panelBox}>
-          <ActionHistory refreshSignal={refreshSignal} />
+          <ActionHistory token={token} refreshSignal={refreshSignal} />
         </section>
       </main>
-    </div>
-  );
-}
-
-function Centered({ text, showSignOut, onSignOut }) {
-  return (
-    <div style={s.centeredWrap}>
-      <p style={s.centeredText}>{text}</p>
-      {showSignOut && <button onClick={onSignOut} style={s.secondaryButton}>Sign out</button>}
     </div>
   );
 }
