@@ -67,6 +67,7 @@
 const SUPABASE_URL = "https://ngfkmluzrgbphgowrrul.supabase.co";
 const FUNCTION_URL = SUPABASE_URL + "/functions/v1/trigger-admin-action";
 const LIST_ACTIONS_URL = SUPABASE_URL + "/functions/v1/list-admin-function";
+const ROBLOX_LOOKUP_URL = SUPABASE_URL + "/functions/v1/roblox-lookup";
 
 const { useState, useEffect, useCallback } = React;
 const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login-function";
@@ -154,12 +155,32 @@ function ActionForm({ onActionComplete, token }) {
     setLookingUp(true);
     setResult(null);
     try {
-      const res = await fetch("https://users.roblox.com/v1/usernames/users", {
+      if (!token) {
+        setResult({ ok: false, message: "Your session expired — please sign in again." });
+        setLookingUp(false);
+        return;
+      }
+
+      // Routed through the roblox-lookup Supabase Edge Function instead of
+      // calling users.roblox.com directly — Roblox doesn't send CORS headers
+      // that allow browser-based requests, so this must go through a
+      // server-side proxy. The edge function also checks the admin session
+      // token, same as trigger-admin-action.
+      const res = await fetch(ROBLOX_LOOKUP_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernames: [robloxUsername.trim()], excludeBannedUsers: false }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: robloxUsername.trim() }),
       });
       const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setResult({ ok: false, message: data.error || "Lookup failed." });
+        return;
+      }
+
       if (data && data.data && data.data.length) {
         setRobloxUserId(String(data.data[0].id));
         setResult({ ok: true, message: `Found: ${data.data[0].name} (UserId ${data.data[0].id})` });
