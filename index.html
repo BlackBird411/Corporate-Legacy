@@ -29,6 +29,14 @@
     --success-dim: #2c5e3e;
     --mono: 'SF Mono', Consolas, 'Courier New', monospace;
     --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Personnel Database — frosted "clearance terminal" palette,
+       inspired by the Nanorox reference but not copied in layout */
+    --pd-glass-top: rgba(18, 22, 30, 0.82);
+    --pd-glass-bottom: rgba(28, 33, 40, 0.68);
+    --pd-glass-border: rgba(201, 168, 118, 0.22);
+    --pd-hairline: rgba(255, 255, 255, 0.08);
+    --pd-clearance: #c9a876;
   }
   * { box-sizing: border-box; }
   html, body, #root { height: 100%; margin: 0; }
@@ -53,6 +61,20 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* Personnel Database specific animations */
+  @keyframes pd-scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  @keyframes pd-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  @keyframes pd-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 </head>
 <body>
@@ -68,6 +90,7 @@ const SUPABASE_URL = "https://ngfkmluzrgbphgowrrul.supabase.co";
 const FUNCTION_URL = SUPABASE_URL + "/functions/v1/trigger-admin-action";
 const LIST_ACTIONS_URL = SUPABASE_URL + "/functions/v1/list-admin-function";
 const ROBLOX_LOOKUP_URL = SUPABASE_URL + "/functions/v1/roblox-lookup";
+const PROFILE_LOOKUP_URL = SUPABASE_URL + "/functions/v1/player-profile-lookup";
 
 const { useState, useEffect, useCallback } = React;
 const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login-function";
@@ -138,15 +161,20 @@ const ACTION_TYPES = [
   { value: "add_xp", label: "Add XP", field: "delta", verb: "Grant XP" },
 ];
 
-function ActionForm({ onActionComplete, token }) {
-  const [robloxUserId, setRobloxUserId] = useState("");
-  const [robloxUsername, setRobloxUsername] = useState("");
+function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername }) {
+  const [robloxUserId, setRobloxUserId] = useState(prefillUserId || "");
+  const [robloxUsername, setRobloxUsername] = useState(prefillUsername || "");
   const [actionType, setActionType] = useState("set_credits");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [lookingUp, setLookingUp] = useState(false);
+
+  useEffect(() => {
+    if (prefillUserId) setRobloxUserId(prefillUserId);
+    if (prefillUsername) setRobloxUsername(prefillUsername);
+  }, [prefillUserId, prefillUsername]);
 
   const selectedAction = ACTION_TYPES.find(a => a.value === actionType);
 
@@ -369,7 +397,307 @@ function ActionHistory({ refreshSignal, token }) {
 }
 
 // =========================================================
-// App shell — auth + admin allowlist gate
+// Personnel Database — profile lookup
+// =========================================================
+
+// Roblox avatar headshot thumbnail — public endpoint, no auth needed,
+// works for any UserId whether or not they've ever joined this game.
+function avatarHeadshotUrl(userId) {
+  return `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
+}
+
+function formatDuration(totalSeconds) {
+  if (totalSeconds === null || totalSeconds === undefined) return "—";
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h}H ${m}M ${sec}S`;
+}
+
+function formatJoinDate(unixSeconds) {
+  if (!unixSeconds) return "UNKNOWN";
+  const d = new Date(unixSeconds * 1000);
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" }) +
+    " · " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+function daysAgo(unixSeconds) {
+  if (!unixSeconds) return null;
+  const diffMs = Date.now() - unixSeconds * 1000;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
+const INVENTORY_CATEGORIES = [
+  { key: "Weapons", label: "Weapons" },
+  { key: "Medical", label: "Medical" },
+  { key: "Armor", label: "Armor" },
+  { key: "Items", label: "Items" },
+];
+
+function InventoryCategory({ label, items }) {
+  const [open, setOpen] = useState(true);
+  const list = Array.isArray(items) ? items : [];
+  return (
+    <div style={pd.invCategory}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={pd.invCategoryHeader}>
+        <span style={pd.invCategoryLabel}>{label}</span>
+        <span style={pd.invCategoryCount}>{list.length}</span>
+        <span style={{ ...pd.invChevron, transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+      </button>
+      {open && (
+        list.length > 0 ? (
+          <div style={pd.invGrid}>
+            {list.map((item, i) => (
+              <div key={i} style={pd.invItem}>{typeof item === "string" ? item : (item?.name || JSON.stringify(item))}</div>
+            ))}
+          </div>
+        ) : (
+          <div style={pd.invEmpty}>No items in this category.</div>
+        )
+      )}
+    </div>
+  );
+}
+
+function PersonnelDatabase({ token, onEditPlayer }) {
+  const [query, setQuery] = useState("");
+  const [queryMode, setQueryMode] = useState("userid"); // "userid" | "username"
+  const [lookingUp, setLookingUp] = useState(false);
+  const [error, setError] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [resolvedUsername, setResolvedUsername] = useState(null);
+
+  async function handleLookup(e) {
+    e.preventDefault();
+    setError(null);
+    setProfile(null);
+    if (!query.trim()) return;
+
+    setLookingUp(true);
+    try {
+      if (!token) {
+        setError("Your session expired — please sign in again.");
+        setLookingUp(false);
+        return;
+      }
+
+      let userId = query.trim();
+      let usernameForDisplay = null;
+
+      // If it doesn't look numeric, resolve it as a username first via
+      // the same roblox-lookup proxy the Actions tab uses.
+      if (!/^\d+$/.test(userId)) {
+        const lookupRes = await fetch(ROBLOX_LOOKUP_URL, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ username: userId }),
+        });
+        const lookupJson = await lookupRes.json();
+        if (!lookupRes.ok || lookupJson.error || !lookupJson.data?.length) {
+          setError(lookupJson.error || "No Roblox user found with that username.");
+          setLookingUp(false);
+          return;
+        }
+        userId = String(lookupJson.data[0].id);
+        usernameForDisplay = lookupJson.data[0].name;
+      }
+
+      const res = await fetch(PROFILE_LOOKUP_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ roblox_user_id: Number(userId) }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        setError(json.error || "Lookup failed.");
+        setLookingUp(false);
+        return;
+      }
+
+      setResolvedUsername(usernameForDisplay);
+      setProfile(json);
+    } catch (err) {
+      setError("Network error reaching the profile lookup function.");
+    } finally {
+      setLookingUp(false);
+    }
+  }
+
+  return (
+    <div style={pd.wrap}>
+      <form onSubmit={handleLookup} style={pd.searchRow}>
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search by UserId or username…"
+          style={{ ...s.input, flex: 1, fontFamily: "var(--mono)" }}
+        />
+        <button type="submit" disabled={lookingUp || !query.trim()} style={s.primaryButton}>
+          {lookingUp ? "Querying…" : "Query database"}
+        </button>
+      </form>
+
+      {error && <div style={s.errorBox}>{error}</div>}
+
+      {!profile && !error && !lookingUp && (
+        <div style={pd.emptyState}>
+          <div style={pd.emptyStateIcon}>◆</div>
+          <div>Enter a Roblox UserId or username to pull a personnel record.</div>
+          <div style={pd.emptyStateSub}>Records are read live from ProfileStore — works for offline players too.</div>
+        </div>
+      )}
+
+      {profile && (
+        <ProfileDossier
+          profile={profile}
+          username={resolvedUsername}
+          onEdit={() => onEditPlayer({ userId: String(profile.roblox_user_id), username: resolvedUsername || "" })}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProfileDossier({ profile, username, onEdit }) {
+  const found = profile.profile_found;
+  const displayName = username || `UserId ${profile.roblox_user_id}`;
+  const clearance = found ? "FIELD OPERATIVE" : "NO RECORD";
+
+  return (
+    <div style={pd.dossier}>
+      {/* Scanline sweep, purely decorative */}
+      <div style={pd.scanline}></div>
+
+      <div style={pd.dossierHeader}>
+        <div style={pd.dossierHeaderTop}>
+          <span style={pd.osLabel}>UE PERSONNEL DATABASE — LIVE QUERY</span>
+          <span style={{ ...pd.liveDot, ...(found ? {} : { background: "var(--danger)" }) }}></span>
+        </div>
+      </div>
+
+      <div style={pd.dossierBody}>
+        <div style={pd.portraitCol}>
+          <div style={pd.portraitFrame}>
+            <img
+              src={avatarHeadshotUrl(profile.roblox_user_id)}
+              alt={displayName}
+              style={pd.portraitImg}
+              onError={(e) => { e.target.style.opacity = 0.15; }}
+            />
+          </div>
+          <div style={pd.clearanceTag}>{clearance}</div>
+        </div>
+
+        <div style={pd.identityCol}>
+          <div style={pd.nameRow}>
+            <span style={pd.name}>{displayName}</span>
+            {found && profile.credits !== null && (
+              <span style={pd.creditsBadge}>{Number(profile.credits).toLocaleString()} ₵</span>
+            )}
+          </div>
+          <div style={pd.userIdLine}>UID {profile.roblox_user_id}</div>
+
+          {!found && (
+            <div style={pd.notFoundBox}>
+              No game data found for this player. This can mean the account has
+              never joined Underground Empire, or the UserId was entered incorrectly.
+            </div>
+          )}
+
+          {found && (
+            <React.Fragment>
+              <div style={pd.hairline}></div>
+              <div style={pd.statGrid}>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>First joined</div>
+                  <div style={pd.statValue}>{formatJoinDate(profile.first_joined)}</div>
+                  {profile.first_joined && <div style={pd.statSub}>{daysAgo(profile.first_joined)}</div>}
+                </div>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>Total playtime</div>
+                  <div style={pd.statValue}>{formatDuration(profile.total_time_seconds)}</div>
+                </div>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>XP / Total XP</div>
+                  <div style={pd.statValue}>{profile.xp ?? "—"} / {profile.total_xp ?? "—"}</div>
+                </div>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>Skill points</div>
+                  <div style={pd.statValue}>{profile.skill_points ?? "—"}</div>
+                </div>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>Bank</div>
+                  <div style={pd.statValue}>
+                    {profile.bank !== null && profile.bank !== undefined
+                      ? Number(profile.bank).toLocaleString() + " ₵"
+                      : "—"}
+                  </div>
+                </div>
+                <div style={pd.statCell}>
+                  <div style={pd.statLabel}>Stock portfolio</div>
+                  <div style={pd.statValue}>
+                    {profile.stock_portfolio
+                      ? (Array.isArray(profile.stock_portfolio) ? `${profile.stock_portfolio.length} holdings` : "on file")
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+      </div>
+
+      {found && (
+        <React.Fragment>
+          <div style={pd.sectionDivider}>INVENTORY</div>
+          <div style={pd.inventoryWrap}>
+            {INVENTORY_CATEGORIES.map(cat => (
+              <InventoryCategory
+                key={cat.key}
+                label={cat.label}
+                items={profile.inventory ? profile.inventory[cat.key] : []}
+              />
+            ))}
+          </div>
+
+          <div style={pd.sectionDivider}>ADMIN INTERACTION LOG</div>
+          <div style={pd.historyWrap}>
+            {(!profile.admin_actions || profile.admin_actions.length === 0) && (
+              <div style={pd.invEmpty}>No prior admin actions on file for this player.</div>
+            )}
+            {profile.admin_actions && profile.admin_actions.map(row => {
+              const status = STATUS_STYLES[row.status] || STATUS_STYLES.pending;
+              const p = row.payload || {};
+              const amount = p.value !== undefined ? `→ ${p.value}` : (p.delta !== undefined ? `${p.delta > 0 ? "+" : ""}${p.delta}` : "—");
+              return (
+                <div key={row.id} style={pd.historyRow}>
+                  <span style={{ ...pd.historyDot, background: status.color }}></span>
+                  <span style={pd.historyAction}>{ACTION_LABELS[row.action_type] || row.action_type}</span>
+                  <span style={pd.historyAmount}>{amount}</span>
+                  <span style={pd.historyTime}>{new Date(row.created_at).toLocaleString()}</span>
+                  {row.reason && <span style={pd.historyReason}>{row.reason}</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={pd.dossierFooter}>
+            <button type="button" onClick={onEdit} style={s.primaryButton}>Edit this player →</button>
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+// =========================================================
+// App shell — auth + tabs
 // =========================================================
 function App() {
   const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") || null);
@@ -378,6 +706,8 @@ function App() {
     return raw ? JSON.parse(raw) : null;
   });
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [activeTab, setActiveTab] = useState("actions"); // "actions" | "personnel"
+  const [prefill, setPrefill] = useState({ userId: "", username: "" });
 
   const handleLoginSuccess = useCallback((newToken, admin) => {
     sessionStorage.setItem("admin_token", newToken);
@@ -391,6 +721,11 @@ function App() {
     sessionStorage.removeItem("admin_info");
     setToken(null);
     setAdminInfo(null);
+  }, []);
+
+  const handleEditFromProfile = useCallback(({ userId, username }) => {
+    setPrefill({ userId, username });
+    setActiveTab("actions");
   }, []);
 
   if (!token || !adminInfo) return <Login onLoginSuccess={handleLoginSuccess} />;
@@ -407,15 +742,44 @@ function App() {
           <button onClick={handleSignOut} style={s.secondaryButton}>Sign out</button>
         </div>
       </header>
-      <main style={s.main}>
-        <section style={s.panelBox}>
-          <h2 style={s.panelTitle}>Edit player data</h2>
-          <ActionForm token={token} onActionComplete={() => setRefreshSignal(n => n + 1)} />
-        </section>
-        <section style={s.panelBox}>
-          <ActionHistory token={token} refreshSignal={refreshSignal} />
-        </section>
-      </main>
+
+      <nav style={s.tabRow}>
+        <button
+          onClick={() => setActiveTab("actions")}
+          style={activeTab === "actions" ? s.tabActive : s.tab}
+        >
+          Actions
+        </button>
+        <button
+          onClick={() => setActiveTab("personnel")}
+          style={activeTab === "personnel" ? s.tabActive : s.tab}
+        >
+          Personnel Database
+        </button>
+      </nav>
+
+      {activeTab === "actions" && (
+        <main style={s.main}>
+          <section style={s.panelBox}>
+            <h2 style={s.panelTitle}>Edit player data</h2>
+            <ActionForm
+              token={token}
+              onActionComplete={() => setRefreshSignal(n => n + 1)}
+              prefillUserId={prefill.userId}
+              prefillUsername={prefill.username}
+            />
+          </section>
+          <section style={s.panelBox}>
+            <ActionHistory token={token} refreshSignal={refreshSignal} />
+          </section>
+        </main>
+      )}
+
+      {activeTab === "personnel" && (
+        <main style={{ ...s.main, maxWidth: 780, margin: "0 auto", width: "100%" }}>
+          <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} />
+        </main>
+      )}
     </div>
   );
 }
@@ -455,16 +819,143 @@ const s = {
   delivery: { fontFamily: "var(--mono)", fontSize: 10.5, color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, padding: "1px 6px" },
   time: { fontSize: 11.5, color: "var(--text-faint)", marginLeft: "auto" },
   reason: { fontSize: 12.5, color: "var(--text-dim)", fontStyle: "italic" },
-  page: { maxWidth: 640, margin: "0 auto", padding: "32px 20px 60px" },
-  pageHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 },
+  page: { maxWidth: 900, margin: "0 auto", padding: "32px 20px 60px" },
+  pageHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
   pageTitle: { fontSize: 20, fontWeight: 600, margin: 0 },
   headerRight: { display: "flex", alignItems: "center", gap: 12 },
   whoami: { fontSize: 12.5, color: "var(--text-dim)" },
-  main: { display: "flex", flexDirection: "column", gap: 24 },
+  main: { display: "flex", flexDirection: "column", gap: 24, maxWidth: 640, margin: "0 auto" },
   panelBox: { background: "var(--bg-panel)", border: "1px solid var(--border)", borderRadius: 10, padding: 24 },
   panelTitle: { fontSize: 15, fontWeight: 600, margin: "0 0 20px 0" },
   centeredWrap: { minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24, textAlign: "center" },
   centeredText: { color: "var(--text-dim)", maxWidth: 360 },
+
+  tabRow: { display: "flex", gap: 4, borderBottom: "1px solid var(--border)", marginBottom: 28, maxWidth: 780, marginLeft: "auto", marginRight: "auto" },
+  tab: { background: "transparent", border: "none", borderBottom: "2px solid transparent", color: "var(--text-faint)", padding: "10px 4px", marginRight: 24, fontSize: 13.5, fontWeight: 600, letterSpacing: "0.02em" },
+  tabActive: { background: "transparent", border: "none", borderBottom: "2px solid var(--accent)", color: "var(--text)", padding: "10px 4px", marginRight: 24, fontSize: 13.5, fontWeight: 600, letterSpacing: "0.02em" },
+};
+
+// =========================================================
+// Personnel Database styles — frosted glass clearance terminal
+// =========================================================
+const pd = {
+  wrap: { display: "flex", flexDirection: "column", gap: 20 },
+  searchRow: { display: "flex", gap: 10 },
+  emptyState: {
+    border: "1px dashed var(--border)",
+    borderRadius: 12,
+    padding: "48px 24px",
+    textAlign: "center",
+    color: "var(--text-dim)",
+    fontSize: 13.5,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+  },
+  emptyStateIcon: { fontSize: 22, color: "var(--accent-dim)", marginBottom: 4 },
+  emptyStateSub: { fontSize: 12, color: "var(--text-faint)" },
+
+  dossier: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: 14,
+    border: "1px solid var(--pd-glass-border)",
+    background: "linear-gradient(180deg, var(--pd-glass-top) 0%, var(--pd-glass-bottom) 100%)",
+    backdropFilter: "blur(6px)",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",
+    animation: "pd-fade-in 0.35s ease-out",
+  },
+  scanline: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, height: "40%",
+    background: "linear-gradient(180deg, rgba(201,168,118,0.05), transparent)",
+    animation: "pd-scan 6s linear infinite",
+    pointerEvents: "none",
+  },
+  dossierHeader: {
+    padding: "12px 20px",
+    borderBottom: "1px solid var(--pd-hairline)",
+  },
+  dossierHeaderTop: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  osLabel: { fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.1em", color: "var(--text-faint)" },
+  liveDot: { width: 7, height: 7, borderRadius: "50%", background: "var(--success)", animation: "pd-blink 1.8s ease-in-out infinite" },
+
+  dossierBody: { display: "flex", gap: 24, padding: "24px 20px" },
+  portraitCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, flexShrink: 0 },
+  portraitFrame: {
+    width: 92, height: 92, borderRadius: 10,
+    border: "1px solid var(--pd-glass-border)",
+    background: "var(--bg)",
+    overflow: "hidden",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  portraitImg: { width: "100%", height: "100%", objectFit: "cover" },
+  clearanceTag: {
+    fontFamily: "var(--mono)", fontSize: 9.5, letterSpacing: "0.06em",
+    color: "var(--pd-clearance)", border: "1px solid var(--pd-glass-border)",
+    borderRadius: 4, padding: "3px 8px", textAlign: "center",
+  },
+
+  identityCol: { flex: 1, display: "flex", flexDirection: "column", gap: 6 },
+  nameRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
+  name: { fontSize: 19, fontWeight: 700, letterSpacing: "0.01em" },
+  creditsBadge: {
+    fontFamily: "var(--mono)", fontSize: 13, color: "#1a1408",
+    background: "var(--accent)", borderRadius: 6, padding: "4px 10px", fontWeight: 700,
+  },
+  userIdLine: { fontFamily: "var(--mono)", fontSize: 11.5, color: "var(--text-faint)" },
+
+  notFoundBox: {
+    marginTop: 10, fontSize: 13, color: "var(--text-dim)",
+    background: "rgba(214,69,69,0.06)", border: "1px solid var(--danger-dim)",
+    borderRadius: 8, padding: "12px 14px", lineHeight: 1.5,
+  },
+
+  hairline: { height: 1, background: "var(--pd-hairline)", margin: "8px 0" },
+  statGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px 20px" },
+  statCell: { display: "flex", flexDirection: "column", gap: 2 },
+  statLabel: { fontFamily: "var(--mono)", fontSize: 10, letterSpacing: "0.06em", color: "var(--text-faint)", textTransform: "uppercase" },
+  statValue: { fontSize: 14, fontWeight: 600, color: "var(--text)" },
+  statSub: { fontSize: 11, color: "var(--text-faint)" },
+
+  sectionDivider: {
+    fontFamily: "var(--mono)", fontSize: 10.5, letterSpacing: "0.1em", color: "var(--accent-dim)",
+    padding: "14px 20px 10px", borderTop: "1px solid var(--pd-hairline)",
+  },
+
+  inventoryWrap: { display: "flex", flexDirection: "column", gap: 8, padding: "0 20px 20px" },
+  invCategory: { border: "1px solid var(--pd-hairline)", borderRadius: 8, overflow: "hidden" },
+  invCategoryHeader: {
+    width: "100%", display: "flex", alignItems: "center", gap: 10,
+    background: "rgba(255,255,255,0.02)", border: "none", padding: "10px 12px",
+    color: "var(--text)", textAlign: "left",
+  },
+  invCategoryLabel: { fontSize: 12.5, fontWeight: 600, flex: 1 },
+  invCategoryCount: {
+    fontFamily: "var(--mono)", fontSize: 11, color: "var(--text-faint)",
+    border: "1px solid var(--border)", borderRadius: 10, padding: "0 8px", minWidth: 20, textAlign: "center",
+  },
+  invChevron: { color: "var(--text-faint)", fontSize: 14, transition: "transform 0.15s ease" },
+  invGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6, padding: "10px 12px" },
+  invItem: {
+    fontSize: 12, fontFamily: "var(--mono)", color: "var(--text-dim)",
+    background: "var(--bg)", border: "1px solid var(--border-soft)", borderRadius: 5, padding: "6px 8px",
+  },
+  invEmpty: { fontSize: 12, color: "var(--text-faint)", padding: "12px", fontStyle: "italic" },
+
+  historyWrap: { display: "flex", flexDirection: "column", gap: 1, padding: "0 20px 20px" },
+  historyRow: {
+    display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+    padding: "9px 4px", borderBottom: "1px solid var(--pd-hairline)", fontSize: 12.5,
+  },
+  historyDot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
+  historyAction: { color: "var(--text)", fontWeight: 600 },
+  historyAmount: { fontFamily: "var(--mono)", color: "var(--accent)" },
+  historyTime: { color: "var(--text-faint)", fontSize: 11, marginLeft: "auto" },
+  historyReason: { color: "var(--text-dim)", fontStyle: "italic", width: "100%", fontSize: 11.5 },
+
+  dossierFooter: { padding: "4px 20px 22px", display: "flex", justifyContent: "flex-end" },
 };
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
