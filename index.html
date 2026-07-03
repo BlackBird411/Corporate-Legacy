@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Underground Empire — Admin Console</title>
+<title>Corporate Legacy — Admin Console</title>
 
 <!-- React + ReactDOM (UMD builds, no build step needed) -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -16,7 +16,7 @@
 
 <style>
   /* =========================================================
-     UNDERGROUND EMPIRE — sudo-terminal admin console
+     Corporate Legacy — sudo-terminal admin console
      Gold / near-black, sidebar-nav, monospace-first.
      Adapted from a "sudo" system-dashboard reference: sidebar
      nav, top vitals strip, bordered panels with command-style
@@ -198,7 +198,7 @@ function Login({ onLoginSuccess }) {
         <div style={s.loginBody}>
           <div style={s.brandRow}>
             <span style={s.brandGlyph}>▍</span>
-            <span style={s.brandName}>sudo-ue</span>
+            <span style={s.brandName}>Main</span>
             <span style={s.brandVersion}>v1.4.2</span>
           </div>
           <div style={s.loginPrompt}>$ ./authenticate --operator</div>
@@ -815,7 +815,7 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
           {!found && (
             <div style={pd.notFoundBox}>
               No game data found for this player. This can mean the account has
-              never joined Underground Empire, or the UserId was entered incorrectly.
+              never joined Corporate Legacy, or the UserId was entered incorrectly.
             </div>
           )}
 
@@ -926,7 +926,7 @@ function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
       <div style={s.sidebarBrand}>
         <span style={s.brandGlyph}>▍</span>
         <div>
-          <div style={s.brandName}>sudo-ue</div>
+          <div style={s.brandName}>Main</div>
           <div style={s.brandVersion}>v1.4.2</div>
         </div>
       </div>
