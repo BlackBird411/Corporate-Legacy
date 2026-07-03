@@ -375,132 +375,6 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
 }
 
 // =========================================================
-// Inventory Action Form
-// =========================================================
-function InventoryActionForm({ token, prefillUserId, prefillUsername, onActionComplete }) {
-  const [robloxUserId, setRobloxUserId] = useState(prefillUserId || "");
-  const [robloxUsername, setRobloxUsername] = useState(prefillUsername || "");
-  const [mode, setMode] = useState("add_item");
-  const [category, setCategory] = useState("Weapons");
-  const [itemName, setItemName] = useState("");
-  const [reason, setReason] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
-
-  useEffect(() => {
-    if (prefillUserId) setRobloxUserId(prefillUserId);
-    if (prefillUsername) setRobloxUsername(prefillUsername);
-  }, [prefillUserId, prefillUsername]);
-
-  const itemsInCategory = ITEM_DATABASE[category] || [];
-
-  useEffect(() => {
-    if (!itemsInCategory.includes(itemName)) setItemName(itemsInCategory[0] || "");
-  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setResult(null);
-
-    const userId = Number(robloxUserId);
-    if (!userId || !Number.isFinite(userId)) {
-      setResult({ ok: false, message: "Enter a valid numeric Roblox UserId." });
-      return;
-    }
-    if (!itemName) {
-      setResult({ ok: false, message: "Select an item." });
-      return;
-    }
-    if (!token) {
-      setResult({ ok: false, message: "Your session expired — please sign in again." });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await fetch(INVENTORY_ACTION_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roblox_user_id: userId,
-          roblox_username: robloxUsername.trim() || null,
-          action_type: mode,
-          payload: { itemName, category },
-          reason: reason.trim() || null,
-        }),
-      });
-      const json = await res.json();
-
-      if (!res.ok || json.error) {
-        setResult({ ok: false, message: json.error || "Action failed for an unknown reason." });
-      } else {
-        const deliveryNote = json.delivery_method === "live"
-          ? "Broadcast sent live."
-          : "Player offline — queued for next join.";
-        setResult({
-          ok: true,
-          message: `${mode === "add_item" ? "Grant" : "Removal"} of "${itemName}" logged. ${deliveryNote}`,
-        });
-        setReason("");
-        if (onActionComplete) onActionComplete();
-      }
-    } catch (err) {
-      setResult({ ok: false, message: "Network error reaching the inventory function." });
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={s.form}>
-      <div style={s.section}>
-        <div style={s.sectionLabel}>--target</div>
-        <div style={s.row}>
-          <input type="text" placeholder="roblox username (optional label)" value={robloxUsername} onChange={e => setRobloxUsername(e.target.value)} style={{ ...s.input, flex: 1 }} />
-        </div>
-        <input type="text" inputMode="numeric" placeholder="roblox userid (numeric)" value={robloxUserId}
-          onChange={e => setRobloxUserId(e.target.value.replace(/[^0-9]/g, ""))} required style={s.input} />
-      </div>
-
-      <div style={s.section}>
-        <div style={s.sectionLabel}>--operation</div>
-        <div style={s.segmentRow}>
-          <button type="button" onClick={() => setMode("add_item")}
-            style={mode === "add_item" ? s.segmentActive : s.segment}>+ add</button>
-          <button type="button" onClick={() => setMode("remove_item")}
-            style={mode === "remove_item" ? s.segmentActiveDanger : s.segment}>− remove</button>
-        </div>
-      </div>
-
-      <div style={s.section}>
-        <div style={s.sectionLabel}>--item</div>
-        <select value={category} onChange={e => setCategory(e.target.value)} style={s.input}>
-          {Object.keys(ITEM_DATABASE).map(cat => (
-            <option key={cat} value={cat}>{cat} ({ITEM_DATABASE[cat].length})</option>
-          ))}
-        </select>
-        <select value={itemName} onChange={e => setItemName(e.target.value)} style={s.input} disabled={itemsInCategory.length === 0}>
-          {itemsInCategory.length === 0 && <option value="">no catalogued items in this category</option>}
-          {itemsInCategory.map(name => <option key={name} value={name}>{name}</option>)}
-        </select>
-        <input type="text" placeholder="reason (optional, shown in audit log)" value={reason} onChange={e => setReason(e.target.value)} style={s.input} />
-      </div>
-
-      {result && <div style={result.ok ? s.resultOk : s.resultError}>{result.ok ? "✓" : "✕"} {result.message}</div>}
-
-      <div style={s.noteBox}>
-        <span style={{ color: "var(--gold)" }}>note</span> — add/remove is logged and applied directly to the
-        player's live Backpack (or queued for next join if offline). Duplicate-cap checks are bypassed for admin grants.
-      </div>
-
-      <button type="submit" disabled={submitting || !itemName} style={mode === "remove_item" ? s.primaryButtonDanger : s.primaryButton}>
-        {submitting ? "SENDING…" : (mode === "add_item" ? "GRANT ITEM →" : "REMOVE ITEM →")}
-      </button>
-    </form>
-  );
-}
-
-// =========================================================
 // Action History — styled as the /var/log tail panel
 // =========================================================
 const STATUS_STYLES = {
@@ -623,41 +497,165 @@ const INVENTORY_CATEGORIES = [
   { key: "Items", label: "items" },
 ];
 
-function InventoryCategory({ label, items }) {
-  const [open, setOpen] = useState(true);
+// Groups a flat array of item-name strings (one entry per copy held,
+// matching how profile.Inventory is actually stored — see InventoryHandler.lua)
+// into { name, count } pairs for display.
+function groupItemCounts(items) {
   const list = Array.isArray(items) ? items : [];
+  const counts = new Map();
+  for (const item of list) {
+    const name = typeof item === "string" ? item : (item?.name || String(item));
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
+}
+
+// One held-item row: shows name + count on file, a quantity stepper capped
+// to what's actually held, and a Remove button. Quantity defaults to 1 so
+// a misclick can't nuke a whole stack.
+function HeldItemRow({ name, count, category, onRemove, busy }) {
+  const [qty, setQty] = useState(1);
+
+  function clampQty(v) {
+    const n = Math.floor(Number(v) || 1);
+    return Math.max(1, Math.min(count, n));
+  }
+
+  return (
+    <div style={pd.heldRow}>
+      <span style={pd.heldName}>{name}</span>
+      <span style={pd.heldCount}>×{count}</span>
+      <input
+        type="number"
+        min={1}
+        max={count}
+        value={qty}
+        onChange={e => setQty(clampQty(e.target.value))}
+        style={pd.heldQtyInput}
+        disabled={busy}
+      />
+      <button
+        type="button"
+        onClick={() => onRemove(name, category, qty)}
+        disabled={busy}
+        style={pd.heldRemoveBtn}
+      >
+        {busy ? "…" : "− remove"}
+      </button>
+    </div>
+  );
+}
+
+// Add-item picker for one category: item dropdown + quantity + Grant button.
+// Only items NOT already held (or held, since re-granting more copies is
+// valid) are listed — full catalogue is always offered, since granting a
+// second copy of something already held is a normal admin action.
+function AddItemRow({ category, onAdd, busy }) {
+  const itemsInCategory = ITEM_DATABASE[category] || [];
+  const [itemName, setItemName] = useState(itemsInCategory[0] || "");
+  const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    setItemName(itemsInCategory[0] || "");
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (itemsInCategory.length === 0) {
+    return <div style={pd.invEmpty}>no catalogued items in this category</div>;
+  }
+
+  return (
+    <div style={pd.addRow}>
+      <select value={itemName} onChange={e => setItemName(e.target.value)} style={pd.addSelect} disabled={busy}>
+        {itemsInCategory.map(name => <option key={name} value={name}>{name}</option>)}
+      </select>
+      <input
+        type="number"
+        min={1}
+        max={100}
+        value={qty}
+        onChange={e => setQty(Math.max(1, Math.min(100, Math.floor(Number(e.target.value) || 1))))}
+        style={pd.heldQtyInput}
+        disabled={busy}
+      />
+      <button
+        type="button"
+        onClick={() => onAdd(itemName, category, qty)}
+        disabled={busy || !itemName}
+        style={pd.addBtn}
+      >
+        {busy ? "…" : "+ grant"}
+      </button>
+    </div>
+  );
+}
+
+function InventoryCategory({ label, category, items, onAdd, onRemove, busyKey }) {
+  const [open, setOpen] = useState(true);
+  const grouped = groupItemCounts(items);
+  const totalCount = grouped.reduce((sum, g) => sum + g.count, 0);
+
   return (
     <div style={pd.invCategory}>
       <button type="button" onClick={() => setOpen(o => !o)} style={pd.invCategoryHeader}>
         <span style={{ ...pd.invChevron, transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
         <span style={pd.invCategoryLabel}>{label}</span>
-        <span style={pd.invCategoryCount}>{list.length}</span>
+        <span style={pd.invCategoryCount}>{totalCount}</span>
       </button>
       {open && (
-        list.length > 0 ? (
-          <div style={pd.invGrid}>
-            {list.map((item, i) => (
-              <div key={i} style={pd.invItem}>{typeof item === "string" ? item : (item?.name || JSON.stringify(item))}</div>
-            ))}
+        <div style={pd.invCategoryBody}>
+          {grouped.length > 0 ? (
+            <div style={pd.heldList}>
+              {grouped.map(g => (
+                <HeldItemRow
+                  key={g.name}
+                  name={g.name}
+                  count={g.count}
+                  category={category}
+                  onRemove={onRemove}
+                  busy={busyKey === `remove:${g.name}`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={pd.invEmpty}>empty</div>
+          )}
+          <div style={pd.addRowWrap}>
+            <span style={pd.addRowLabel}>grant new</span>
+            <AddItemRow category={category} onAdd={onAdd} busy={busyKey === `add:${category}`} />
           </div>
-        ) : (
-          <div style={pd.invEmpty}>empty</div>
-        )
+        </div>
       )}
     </div>
   );
 }
 
-function PersonnelDatabase({ token, onEditPlayer, onEditInventory }) {
+function PersonnelDatabase({ token, onEditPlayer }) {
   const [query, setQuery] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [resolvedUsername, setResolvedUsername] = useState(null);
+  const [invBusyKey, setInvBusyKey] = useState(null); // e.g. "add:Weapons" or "remove:AK-47"
+  const [invError, setInvError] = useState(null);
+
+  // Pulled out of handleLookup so a silent refetch after an inventory
+  // mutation can reuse it without re-running the username→userId resolve
+  // step (we already know the numeric userId by that point).
+  async function fetchProfile(userId) {
+    const res = await fetch(PROFILE_LOOKUP_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ roblox_user_id: Number(userId) }),
+    });
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || "Lookup failed.");
+    return json;
+  }
 
   async function handleLookup(e) {
     e.preventDefault();
     setError(null);
+    setInvError(null);
     setProfile(null);
     if (!query.trim()) return;
 
@@ -688,27 +686,56 @@ function PersonnelDatabase({ token, onEditPlayer, onEditInventory }) {
         usernameForDisplay = lookupJson.data[0].name;
       }
 
-      const res = await fetch(PROFILE_LOOKUP_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ roblox_user_id: Number(userId) }),
-      });
-      const json = await res.json();
-
-      if (!res.ok || json.error) {
-        setError(json.error || "Lookup failed.");
-        setLookingUp(false);
-        return;
-      }
-
+      const json = await fetchProfile(userId);
       setResolvedUsername(usernameForDisplay);
       setProfile(json);
     } catch (err) {
-      setError("Network error reaching the profile lookup function.");
+      setError(err.message || "Network error reaching the profile lookup function.");
     } finally {
       setLookingUp(false);
     }
   }
+
+  // Shared submit path for both grant and remove — the only difference is
+  // action_type and which busy-key covers the affected row/section so the
+  // rest of the dossier stays interactive while one request is in flight.
+  async function submitInventoryAction(actionType, itemName, category, quantity, busyKey) {
+    if (!token || !profile) return;
+    setInvBusyKey(busyKey);
+    setInvError(null);
+    try {
+      const res = await fetch(INVENTORY_ACTION_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roblox_user_id: profile.roblox_user_id,
+          roblox_username: resolvedUsername || null,
+          action_type: actionType,
+          payload: { itemName, category, quantity },
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setInvError(json.error || "Inventory action failed.");
+        return;
+      }
+      // Refetch so the dossier reflects the real post-action state rather
+      // than an optimistic local guess — matters here because add/remove
+      // apply live in-game (or queue if offline), so the source of truth
+      // is the next ProfileStore read, not anything we can compute client-side.
+      const refreshed = await fetchProfile(profile.roblox_user_id);
+      setProfile(refreshed);
+    } catch (err) {
+      setInvError("Network error reaching the inventory function.");
+    } finally {
+      setInvBusyKey(null);
+    }
+  }
+
+  const handleAddItem = (itemName, category, quantity) =>
+    submitInventoryAction("add_item", itemName, category, quantity, `add:${category}`);
+  const handleRemoveItem = (itemName, category, quantity) =>
+    submitInventoryAction("remove_item", itemName, category, quantity, `remove:${itemName}`);
 
   return (
     <div style={pd.wrap}>
@@ -741,14 +768,17 @@ function PersonnelDatabase({ token, onEditPlayer, onEditInventory }) {
           profile={profile}
           username={resolvedUsername}
           onEdit={() => onEditPlayer({ userId: String(profile.roblox_user_id), username: resolvedUsername || "" })}
-          onEditInventory={() => onEditInventory({ userId: String(profile.roblox_user_id), username: resolvedUsername || "" })}
+          onAddItem={handleAddItem}
+          onRemoveItem={handleRemoveItem}
+          invBusyKey={invBusyKey}
+          invError={invError}
         />
       )}
     </div>
   );
 }
 
-function ProfileDossier({ profile, username, onEdit, onEditInventory }) {
+function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, invBusyKey, invError }) {
   const found = profile.profile_found;
   const displayName = username || `UserId ${profile.roblox_user_id}`;
   const clearance = found ? "operative on file" : "no record";
@@ -835,12 +865,17 @@ function ProfileDossier({ profile, username, onEdit, onEditInventory }) {
       {found && (
         <React.Fragment>
           <div style={pd.sectionDivider}># inventory</div>
+          {invError && <div style={{ ...s.errorBox, margin: "0 18px 10px" }}>✕ {invError}</div>}
           <div style={pd.inventoryWrap}>
             {INVENTORY_CATEGORIES.map(cat => (
               <InventoryCategory
                 key={cat.key}
                 label={cat.label}
+                category={cat.key}
                 items={profile.inventory ? profile.inventory[cat.key] : []}
+                onAdd={onAddItem}
+                onRemove={onRemoveItem}
+                busyKey={invBusyKey}
               />
             ))}
           </div>
@@ -869,7 +904,6 @@ function ProfileDossier({ profile, username, onEdit, onEditInventory }) {
           </div>
 
           <div style={pd.dossierFooter}>
-            <button type="button" onClick={onEditInventory} style={s.secondaryButton}>edit inventory →</button>
             <button type="button" onClick={onEdit} style={s.primaryButton}>edit credits/xp →</button>
           </div>
         </React.Fragment>
@@ -883,7 +917,6 @@ function ProfileDossier({ profile, username, onEdit, onEditInventory }) {
 // =========================================================
 const NAV_ITEMS = [
   { key: "actions", label: "actions", glyph: "⚙" },
-  { key: "inventory", label: "inventory", glyph: "▤" },
   { key: "personnel", label: "personnel", glyph: "◈" },
 ];
 
@@ -979,11 +1012,6 @@ function App() {
     setActiveTab("actions");
   }, []);
 
-  const handleEditInventoryFromProfile = useCallback(({ userId, username }) => {
-    setPrefill({ userId, username });
-    setActiveTab("inventory");
-  }, []);
-
   // Derive pending count + last-sync readout from the same history list
   // used by ActionHistory, fetched independently so the top strip updates
   // even before either tab's panel has mounted.
@@ -1036,29 +1064,9 @@ function App() {
           </main>
         )}
 
-        {activeTab === "inventory" && (
-          <main style={s.contentGrid}>
-            <div style={s.panelBox}>
-              <div style={s.panelBar}>
-                <span style={s.panelBarPath}>~/inventory — grant_item.sh</span>
-                <span style={s.panelBarTag}>form</span>
-              </div>
-              <div style={s.panelBody}>
-                <InventoryActionForm
-                  token={token}
-                  onActionComplete={() => setRefreshSignal(n => n + 1)}
-                  prefillUserId={prefill.userId}
-                  prefillUsername={prefill.username}
-                />
-              </div>
-            </div>
-            <ActionHistory token={token} refreshSignal={refreshSignal} />
-          </main>
-        )}
-
         {activeTab === "personnel" && (
           <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 780 }}>
-            <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} onEditInventory={handleEditInventoryFromProfile} />
+            <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} />
           </main>
         )}
       </div>
