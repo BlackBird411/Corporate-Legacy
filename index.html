@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Veyra — Admin Console</title>
+<title>Veyrathis — Admin Console</title>
 
 <!-- React + ReactDOM (UMD builds, no build step needed) -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -229,7 +229,7 @@ function Login({ onLoginSuccess }) {
       <div style={s.loginPanel}>
         <div style={s.loginBar}>
           <span style={s.loginBarLeft}>
-            <span style={s.loginBarLabel}>Veyra Admin — Log On</span>
+            <span style={s.loginBarLabel}>Veyrathis Admin — Log On</span>
           </span>
           <span style={s.winBtnRow}>
             <span style={s.winBtn}>_</span>
@@ -240,7 +240,7 @@ function Login({ onLoginSuccess }) {
         <div style={s.loginBody}>
           <div style={s.brandRow}>
             <span style={s.brandGlyph}>◆</span>
-            <span style={s.brandName}>Veyra</span>
+            <span style={s.brandName}>Verathis</span>
             <span style={s.brandVersion}>Admin Console v1.4.2</span>
           </div>
           <div style={s.loginPrompt}>Sign in with your operator account to continue.</div>
@@ -968,7 +968,7 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
           {!found && (
             <div style={pd.notFoundBox}>
               No game data found for this player. This can mean the account has
-              never joined Veyra, or the UserId was entered incorrectly.
+              never joined Veyrathis, or the UserId was entered incorrectly.
             </div>
           )}
 
@@ -1080,7 +1080,7 @@ function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
       <div style={s.sidebarBrand}>
         <span style={s.brandGlyph}>◆</span>
         <div>
-          <div style={s.brandName}>Veyra</div>
+          <div style={s.brandName}>Veyrathis</div>
           <div style={s.brandVersion}>Admin Console v1.4.2</div>
         </div>
       </div>
@@ -1199,7 +1199,7 @@ function App() {
           <div style={s.appTitleBar}>
             <span style={s.appTitleBarLeft}>
               <span style={s.appTitleBarIcon}>◆</span>
-              <span>Veyra Admin Console</span>
+              <span>Veyrathis Admin Console</span>
             </span>
             <span style={s.winBtnRow}>
               <span style={s.winBtn}>_</span>
