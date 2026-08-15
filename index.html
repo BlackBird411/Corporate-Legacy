@@ -16,54 +16,57 @@
 
 <style>
   /* =========================================================
-     Veyra — Windows XP "Luna" admin console
-     Classic blue titlebars, beveled gray panels, sunken fields.
-     Component tree and all data logic are unchanged from the
-     original build — this file only restyles presentation.
+     Veyra — vintage browser-chrome admin console
+     Paper-white surfaces, brass/gold rules in place of the old
+     blue titlebars, no iconography. Component tree and all data
+     logic are unchanged from the original build — this file only
+     restyles presentation. Variable names are kept as --xp-* since
+     they're referenced throughout every style object below; only
+     the values underneath have changed.
      ========================================================= */
   :root {
     /* Desktop + window surfaces */
-    --xp-desktop: #3A6EA5;
-    --xp-desktop-dark: #1E4C82;
-    --xp-window: #ECE9D8;
-    --xp-window-light: #F5F4EC;
+    --xp-desktop: #D8D3C4;
+    --xp-desktop-dark: #C7C1AE;
+    --xp-window: #FFFFFF;
+    --xp-window-light: #FBFAF6;
     --xp-panel-inset: #FFFFFF;
     --xp-field: #FFFFFF;
 
-    /* Titlebar (active) — classic Luna blue gradient */
-    --xp-title-l: #0A57E0;
-    --xp-title-m: #3C93FF;
-    --xp-title-r: #0A57E0;
-    --xp-title-glow: #6FB0FF;
+    /* Titlebar (active) — brass/gold in place of Luna blue */
+    --xp-title-l: #8A6412;
+    --xp-title-m: #B4901E;
+    --xp-title-r: #8A6412;
+    --xp-title-glow: #D8B34A;
     /* Titlebar (inactive / secondary panels) */
-    --xp-title-inactive-l: #7B93B8;
-    --xp-title-inactive-r: #A0AEC4;
+    --xp-title-inactive-l: #A99A76;
+    --xp-title-inactive-r: #C2B590;
 
-    /* Bevel edges — the thing that makes it read as "Windows" */
+    /* Bevel edges — kept subtle so panels read as paper, not chrome */
     --xp-bevel-light: #FFFFFF;
-    --xp-bevel-lightest: #F5F4EC;
-    --xp-bevel-shadow: #ACA899;
-    --xp-bevel-dark: #716F64;
-    --xp-field-border-top: #7F9DB9;
-    --xp-field-border-bottom: #E8EDF5;
+    --xp-bevel-lightest: #FDFCF8;
+    --xp-bevel-shadow: #C8C2AE;
+    --xp-bevel-dark: #8C8672;
+    --xp-field-border-top: #B7AE94;
+    --xp-field-border-bottom: #EFEBDD;
 
-    --xp-text: #000000;
-    --xp-text-dim: #3A3A3A;
-    --xp-text-faint: #6D6D6D;
+    --xp-text: #1A1A16;
+    --xp-text-dim: #4A463C;
+    --xp-text-faint: #746E5C;
     --xp-text-titlebar: #FFFFFF;
-    --xp-text-link: #0A57E0;
+    --xp-text-link: #7A4E00;
 
-    --xp-selected: #316AC5;
-    --xp-selected-bg: #D9E4FA;
+    --xp-selected: #B4901E;
+    --xp-selected-bg: #F3E9CC;
 
     --xp-green: #2E7D2E;
     --xp-green-bright: #3D9B3D;
     --xp-green-dim: #E6F2E6;
-    --xp-red: #C82C1C;
-    --xp-red-bright: #DE1B1B;
-    --xp-red-dim: #FBE7E4;
-    --xp-gold: #A67C00;
-    --xp-gold-bright: #C99700;
+    --xp-red: #A02A1E;
+    --xp-red-bright: #C23A28;
+    --xp-red-dim: #FBEAE4;
+    --xp-gold: #8A6412;
+    --xp-gold-bright: #B4901E;
 
     --sans: 'Tahoma', 'Trebuchet MS', 'Segoe UI', Verdana, Arial, sans-serif;
     --sans-display: 'Trebuchet MS', 'Tahoma', Verdana, Arial, sans-serif;
@@ -72,9 +75,6 @@
   html, body, #root { height: 100%; margin: 0; }
   body {
     background: var(--xp-desktop);
-    background-image:
-      radial-gradient(ellipse 90% 70% at 50% -10%, rgba(255,255,255,0.10), transparent 60%),
-      linear-gradient(180deg, var(--xp-desktop) 0%, var(--xp-desktop-dark) 100%);
     color: var(--xp-text);
     font-family: var(--sans);
     font-size: 12px;
@@ -142,6 +142,9 @@ const ROBLOX_LOOKUP_URL = SUPABASE_URL + "/functions/v1/roblox-lookup";
 const PROFILE_LOOKUP_URL = SUPABASE_URL + "/functions/v1/player-profile-lookup";
 const INVENTORY_ACTION_URL = SUPABASE_URL + "/functions/v1/admin-inventory-action";
 const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login-function";
+// NOTE: this endpoint does not exist yet — see the Supabase setup notes
+// at the end of this file for the table + edge function to add.
+const LIST_ACTIVITY_URL = SUPABASE_URL + "/functions/v1/list-admin-activity";
 
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
@@ -226,7 +229,6 @@ function Login({ onLoginSuccess }) {
       <div style={s.loginPanel}>
         <div style={s.loginBar}>
           <span style={s.loginBarLeft}>
-            <span style={s.loginBarIcon}>🛡</span>
             <span style={s.loginBarLabel}>Veyra Admin — Log On</span>
           </span>
           <span style={s.winBtnRow}>
@@ -470,7 +472,6 @@ function ActionHistory({ refreshSignal, token }) {
     <div style={s.panelBox}>
       <div style={s.panelBar}>
         <span style={s.panelBarLeft}>
-          <span style={s.panelBarIcon}>📋</span>
           <span style={s.panelBarPath}>Admin Actions Log</span>
         </span>
         <span style={s.winBtnRow}>
@@ -511,8 +512,108 @@ function ActionHistory({ refreshSignal, token }) {
 }
 
 // =========================================================
-// Personnel Database
+// Activity Log — audit trail of what each admin did in the
+// console itself (logins, searches, tab switches, edits),
+// distinct from Admin Actions Log above which tracks effects
+// applied to players (credits/XP/items). Reads from a new
+// admin_activity_log table via a new edge function — see the
+// Supabase setup notes at the end of this file.
 // =========================================================
+const ACTIVITY_EVENT_LABELS = {
+  login: "Signed in",
+  logout: "Signed out",
+  view_tab: "Opened tab",
+  player_search: "Searched player",
+  credits_action: "Set credits / XP",
+  inventory_grant: "Granted item",
+  inventory_remove: "Removed item",
+};
+
+function ActivityLog({ token }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [adminFilter, setAdminFilter] = useState("all");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(LIST_ACTIVITY_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setError(json.error || "Failed to load activity log.");
+      } else {
+        setRows(json.activity || []);
+        setError(null);
+      }
+    } catch (err) {
+      setError("Network error loading activity log. This endpoint may not be set up yet — see setup notes.");
+    }
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { if (token) load(); }, [load, token]);
+
+  const admins = useMemo(() => {
+    const set = new Set(rows.map(r => r.admin_username).filter(Boolean));
+    return Array.from(set).sort();
+  }, [rows]);
+
+  const filteredRows = adminFilter === "all" ? rows : rows.filter(r => r.admin_username === adminFilter);
+
+  return (
+    <div style={s.panelBox}>
+      <div style={s.panelBar}>
+        <span style={s.panelBarLeft}>
+          <span style={s.panelBarPath}>Activity Log</span>
+        </span>
+        <span style={s.winBtnRow}>
+          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh">⟳</button>
+        </span>
+      </div>
+      <div style={s.panelBody}>
+        <div style={{ ...s.row, marginBottom: 14, alignItems: "center" }}>
+          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }}>Admin</label>
+          <select value={adminFilter} onChange={e => setAdminFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 200px" }}>
+            <option value="all">All admins</option>
+            {admins.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </div>
+
+        {error && <div style={s.errorBox}>⚠ {error}</div>}
+        {!error && filteredRows.length === 0 && !loading && (
+          <div style={s.empty}>No activity logged yet. Actions taken in this console will appear here.</div>
+        )}
+
+        <div style={s.listHeaderRow}>
+          <span style={{ flexBasis: 66, flexShrink: 0 }}>Time</span>
+          <span style={{ flexBasis: 110, flexShrink: 0 }}>Admin</span>
+          <span style={{ flex: 1 }}>Event</span>
+          <span style={{ flexBasis: 140, flexShrink: 0 }}>Target</span>
+        </div>
+        <div style={s.logFeed}>
+          {filteredRows.map((row, i) => {
+            const time = new Date(row.created_at).toLocaleString(undefined, {
+              month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+            });
+            return (
+              <div key={row.id} style={{ ...s.logLine, background: i % 2 === 0 ? "var(--xp-window-light)" : "transparent" }}>
+                <span style={s.logTime}>{time}</span>
+                <span style={{ ...s.logPlayer, flexBasis: 110, flexShrink: 0, flex: "0 0 110px" }}>{row.admin_username || "unknown"}</span>
+                <span style={{ ...s.logAction, flex: 1, flexBasis: "auto" }}>{ACTIVITY_EVENT_LABELS[row.event_type] || row.event_type}</span>
+                <span style={s.logDelivery}>{row.target || "—"}</span>
+                {row.detail && <span style={s.logReason}>{row.detail}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function avatarHeadshotUrl(userId) {
   return `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
 }
@@ -792,7 +893,6 @@ function PersonnelDatabase({ token, onEditPlayer }) {
   return (
     <div style={pd.wrap}>
       <form onSubmit={handleLookup} style={pd.searchRow}>
-        <span style={pd.searchPrompt}>🔍</span>
         <input
           type="text"
           value={query}
@@ -809,7 +909,6 @@ function PersonnelDatabase({ token, onEditPlayer }) {
 
       {!profile && !error && !lookingUp && (
         <div style={pd.emptyState}>
-          <div style={pd.emptyStateIcon}>👤</div>
           <div>Enter a Roblox UserId or username to pull a personnel record.</div>
           <div style={pd.emptyStateSub}>Records read live from ProfileStore — works for offline players too.</div>
         </div>
@@ -839,7 +938,6 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
     <div style={pd.dossier}>
       <div style={pd.dossierBar}>
         <span style={pd.dossierBarLeft}>
-          <span style={pd.dossierBarIcon}>🗂</span>
           <span style={pd.dossierBarPath}>{displayName} — Personnel Record</span>
         </span>
         <span style={{ ...pd.liveDot, ...(found ? {} : { background: "var(--xp-red)" }) }}></span>
@@ -971,8 +1069,9 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
 // Sidebar nav
 // =========================================================
 const NAV_ITEMS = [
-  { key: "actions", label: "Actions", glyph: "⚙" },
-  { key: "personnel", label: "Personnel", glyph: "👤" },
+  { key: "actions", label: "Actions" },
+  { key: "personnel", label: "Personnel" },
+  { key: "activity", label: "Activity Log" },
 ];
 
 function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
@@ -999,7 +1098,6 @@ function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
             onClick={() => setActiveTab(item.key)}
             style={activeTab === item.key ? s.navItemActive : s.navItem}
           >
-            <span style={s.navGlyph}>{item.glyph}</span>
             {item.label}
           </button>
         ))}
@@ -1018,7 +1116,7 @@ function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
 // =========================================================
 function TopStrip({ pendingCount, lastSync, activeTab }) {
   const now = useClock();
-  const titleMap = { actions: "Actions Overview", inventory: "Inventory Overview", personnel: "Personnel Overview" };
+  const titleMap = { actions: "Actions Overview", inventory: "Inventory Overview", personnel: "Personnel Overview", activity: "Activity Log" };
   return (
     <div style={s.topStrip}>
       <div style={s.topStripLeft}>
@@ -1109,14 +1207,6 @@ function App() {
               <span style={{ ...s.winBtn, ...s.winBtnClose }}>×</span>
             </span>
           </div>
-          <div style={s.menuBar}>
-            <span style={s.menuBarItem}>File</span>
-            <span style={s.menuBarItem}>Edit</span>
-            <span style={s.menuBarItem}>View</span>
-            <span style={s.menuBarItem}>Tools</span>
-            <span style={s.menuBarItem}>Help</span>
-          </div>
-
           <TopStrip pendingCount={pendingCount} lastSync={lastSync} activeTab={activeTab} />
 
           {activeTab === "actions" && (
@@ -1124,7 +1214,6 @@ function App() {
               <div style={s.panelBox}>
                 <div style={s.panelBar}>
                   <span style={s.panelBarLeft}>
-                    <span style={s.panelBarIcon}>💳</span>
                     <span style={s.panelBarPath}>Set Credits / XP</span>
                   </span>
                   <span style={s.panelBarTag}>Form</span>
@@ -1148,6 +1237,12 @@ function App() {
             </main>
           )}
 
+          {activeTab === "activity" && (
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }}>
+              <ActivityLog token={token} />
+            </main>
+          )}
+
           <div style={s.statusBar}>
             <span style={s.statusBarCell}>Ready</span>
             <span style={{ ...s.statusBarCell, ...s.statusBarCellGrow }}></span>
@@ -1168,8 +1263,8 @@ const s = {
   shell: {
     display: "flex", width: "100%", maxWidth: 1280,
     background: "var(--xp-window)",
-    border: "1px solid #0A246A",
-    boxShadow: "2px 2px 0 rgba(0,0,0,0.35), inset 1px 1px 0 var(--xp-bevel-light)",
+    border: "1px solid #5C4508",
+    boxShadow: "2px 2px 0 rgba(0,0,0,0.20), inset 1px 1px 0 var(--xp-bevel-light)",
   },
   mainCol: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" },
 
@@ -1177,25 +1272,17 @@ const s = {
   appTitleBar: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     padding: "4px 4px 4px 8px",
-    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 8%, var(--xp-title-l) 40%, var(--xp-title-r) 92%, #003BB3 100%)",
+    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 8%, var(--xp-title-l) 40%, var(--xp-title-r) 92%, #5C4508 100%)",
     color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 13,
-    borderBottom: "1px solid #0A246A",
+    borderBottom: "1px solid #5C4508",
   },
   appTitleBarLeft: { display: "flex", alignItems: "center", gap: 7, letterSpacing: "0.01em" },
   appTitleBarIcon: { fontSize: 13, filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.3))" },
 
-  // ---- menu bar (File Edit View...) ----
-  menuBar: {
-    display: "flex", gap: 2, padding: "3px 8px",
-    background: "var(--xp-window)", borderBottom: "1px solid var(--xp-bevel-shadow)",
-    fontSize: 11.5,
-  },
-  menuBarItem: { padding: "2px 8px", borderRadius: 2, color: "var(--xp-text)" },
-
-  // ---- sidebar contents (styled as an XP task-pane) ----
+  // ---- sidebar contents (styled as a browser task-pane) ----
   sidebar: {
     width: 208, flexShrink: 0,
-    background: "linear-gradient(180deg, #EFF3FB 0%, #DCE5F5 4%, #C4D4EE 100%)",
+    background: "linear-gradient(180deg, #FBFAF6 0%, #F3EFE3 4%, #EAE3CE 100%)",
     borderRight: "1px solid var(--xp-bevel-shadow)", display: "flex", flexDirection: "column",
     padding: "12px 10px",
   },
@@ -1207,10 +1294,10 @@ const s = {
   brandVersion: { fontSize: 10, color: "var(--xp-text-faint)" },
   sidebarStatusLine: {
     display: "flex", alignItems: "center", gap: 7, fontSize: 10.5, color: "var(--xp-text-dim)",
-    padding: "0 4px 12px", borderBottom: "1px solid #AFC6E8", marginBottom: 12,
+    padding: "0 4px 12px", borderBottom: "1px solid #D9CFAE", marginBottom: 12,
   },
   liveDotSmall: { width: 7, height: 7, borderRadius: "50%", background: "var(--xp-green-bright)", border: "1px solid #1F5F1F", flexShrink: 0, animation: "blink 2s ease-in-out infinite" },
-  navGroupLabel: { fontSize: 10.5, fontWeight: 700, color: "#2255A4", padding: "0 4px 6px", letterSpacing: "0.02em", textTransform: "uppercase" },
+  navGroupLabel: { fontSize: 10.5, fontWeight: 700, color: "#8A6412", padding: "0 4px 6px", letterSpacing: "0.02em", textTransform: "uppercase" },
   navList: { display: "flex", flexDirection: "column", gap: 3, marginBottom: "auto" },
   navItem: {
     display: "flex", alignItems: "center", gap: 9, background: "transparent", border: "1px solid transparent",
@@ -1223,8 +1310,7 @@ const s = {
     border: "1px solid #E8A100", borderRadius: 3, padding: "6px 8px",
     color: "#4A3300", fontSize: 12, fontWeight: 700, textAlign: "left", fontFamily: "var(--sans)",
   },
-  navGlyph: { width: 16, textAlign: "center", fontSize: 12.5 },
-  sidebarFooter: { paddingTop: 12, borderTop: "1px solid #AFC6E8", display: "flex", flexDirection: "column", gap: 8 },
+  sidebarFooter: { paddingTop: 12, borderTop: "1px solid #D9CFAE", display: "flex", flexDirection: "column", gap: 8 },
   whoami: { fontSize: 10.5, color: "var(--xp-text-dim)", padding: "0 2px" },
 
   // ---- top strip ----
@@ -1243,9 +1329,9 @@ const s = {
   // ---- content grid ----
   contentGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "16px 20px 30px", maxWidth: 1100, alignItems: "start" },
 
-  // ---- panel chrome (each panel is its own little XP window) ----
+  // ---- panel chrome (each panel is its own little window) ----
   panelBox: {
-    background: "var(--xp-window)", border: "1px solid #6B7EA8", borderRadius: 3,
+    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
     overflow: "hidden", animation: "fade-in 0.2s ease-out",
     boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
   },
@@ -1256,17 +1342,16 @@ const s = {
     color: "var(--xp-text-titlebar)",
   },
   panelBarLeft: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, fontFamily: "var(--sans-display)" },
-  panelBarIcon: { fontSize: 12 },
   panelBarPath: {},
-  panelBarTag: { fontSize: 10, color: "#DCEBFF", border: "1px solid rgba(255,255,255,0.5)", borderRadius: 2, padding: "1px 7px" },
+  panelBarTag: { fontSize: 10, color: "#F6EACC", border: "1px solid rgba(255,255,255,0.5)", borderRadius: 2, padding: "1px 7px" },
   panelBody: { padding: 16, background: "var(--xp-window)" },
   tailButton: { background: "transparent", border: "none", color: "var(--xp-text-faint)", fontSize: 11, padding: "2px 6px" },
 
-  // ---- classic XP window control buttons (_ □ ×) ----
+  // ---- window control buttons (_ □ ×) ----
   winBtnRow: { display: "flex", gap: 2 },
   winBtn: {
     width: 19, height: 17, display: "inline-flex", alignItems: "center", justifyContent: "center",
-    background: "linear-gradient(180deg, #4C8FEF, #1558C7)", border: "1px solid #0A3E9E",
+    background: "linear-gradient(180deg, #D8B34A, #8A6412)", border: "1px solid #5C4508",
     borderRadius: 2, color: "#fff", fontSize: 10, fontWeight: 700, lineHeight: 1,
     boxShadow: "inset 1px 1px 0 rgba(255,255,255,0.5)",
   },
@@ -1298,9 +1383,9 @@ const s = {
     boxShadow: "inset 1px 1px 0 #FFF6F5",
   },
   fieldset: { display: "flex", flexDirection: "column", gap: 7, border: "1px solid var(--xp-bevel-shadow)", borderRadius: 3, padding: "10px 10px 12px", margin: 0 },
-  legend: { fontSize: 11, fontWeight: 700, color: "#2255A4", padding: "0 4px" },
+  legend: { fontSize: 11, fontWeight: 700, color: "#8A6412", padding: "0 4px" },
   section: { display: "flex", flexDirection: "column", gap: 8 },
-  sectionLabel: { fontSize: 10.5, fontWeight: 700, letterSpacing: "0.02em", color: "#2255A4" },
+  sectionLabel: { fontSize: 10.5, fontWeight: 700, letterSpacing: "0.02em", color: "#8A6412" },
   row: { display: "flex", gap: 7 },
   segmentRow: { display: "flex", gap: 1, background: "var(--xp-bevel-shadow)", borderRadius: 3, overflow: "hidden" },
   segment: { flex: 1, background: "var(--xp-field)", border: "none", padding: "7px 10px", color: "var(--xp-text-dim)", fontSize: 12, fontWeight: 600 },
@@ -1319,7 +1404,7 @@ const s = {
   empty: { color: "var(--xp-text-faint)", fontSize: 12, padding: "20px 0", textAlign: "center" },
   listHeaderRow: {
     display: "flex", gap: 10, padding: "4px 6px", fontSize: 10.5, fontWeight: 700,
-    background: "linear-gradient(180deg, #E7ECF7 0%, #C6D3EC 100%)", color: "#1B3B72",
+    background: "linear-gradient(180deg, #F3EFE3 0%, #E4DBBF 100%)", color: "#5C4508",
     border: "1px solid var(--xp-bevel-shadow)", borderBottom: "none",
   },
   logFeed: { display: "flex", flexDirection: "column", maxHeight: 400, overflowY: "auto", border: "1px solid var(--xp-bevel-shadow)", background: "var(--xp-field)" },
@@ -1336,15 +1421,14 @@ const s = {
   loginWrap: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 },
   loginPanel: {
     width: "100%", maxWidth: 380, background: "var(--xp-window)",
-    border: "1px solid #0A246A", overflow: "hidden",
-    boxShadow: "2px 2px 0 rgba(0,0,0,0.35), inset 1px 1px 0 var(--xp-bevel-light)",
+    border: "1px solid #5C4508", overflow: "hidden",
+    boxShadow: "2px 2px 0 rgba(0,0,0,0.20), inset 1px 1px 0 var(--xp-bevel-light)",
   },
   loginBar: {
     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "5px 5px 5px 10px",
     background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 10%, var(--xp-title-l) 45%, var(--xp-title-r) 100%)",
   },
   loginBarLeft: { display: "flex", alignItems: "center", gap: 7, color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 12.5 },
-  loginBarIcon: { fontSize: 12.5 },
   loginBarDots: { display: "flex", gap: 5 },
   dot: { width: 8, height: 8, borderRadius: "50%", display: "inline-block" },
   loginBarLabel: {},
@@ -1373,17 +1457,15 @@ const s = {
 const pd = {
   wrap: { display: "flex", flexDirection: "column", gap: 16, padding: "16px 20px 30px", maxWidth: 780 },
   searchRow: { display: "flex", gap: 8, alignItems: "center" },
-  searchPrompt: { fontSize: 14 },
   emptyState: {
     border: "1px solid var(--xp-bevel-shadow)", borderRadius: 3, padding: "40px 24px", background: "var(--xp-window-light)",
     textAlign: "center", color: "var(--xp-text-dim)", fontSize: 12,
     display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
   },
-  emptyStateIcon: { fontSize: 28, marginBottom: 4 },
   emptyStateSub: { fontSize: 11, color: "var(--xp-text-faint)" },
 
   dossier: {
-    borderRadius: 3, border: "1px solid #6B7EA8", background: "var(--xp-window)",
+    borderRadius: 3, border: "1px solid #A99060", background: "var(--xp-window)",
     overflow: "hidden", animation: "fade-in 0.25s ease-out",
     boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
   },
@@ -1393,14 +1475,13 @@ const pd = {
     background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 12%, var(--xp-title-l) 45%, var(--xp-title-r) 100%)",
   },
   dossierBarLeft: { display: "flex", alignItems: "center", gap: 6, color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 12 },
-  dossierBarIcon: { fontSize: 12 },
   dossierBarPath: {},
   liveDot: { width: 8, height: 8, borderRadius: "50%", background: "var(--xp-green-bright)", border: "1px solid #fff", animation: "blink 1.8s ease-in-out infinite" },
 
   dossierBody: { display: "flex", gap: 20, padding: "20px 18px" },
   portraitCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 },
   portraitFrame: {
-    width: 84, height: 84, borderRadius: 2, border: "2px solid #7F9DB9",
+    width: 84, height: 84, borderRadius: 2, border: "2px solid #A99060",
     background: "var(--xp-field)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
     boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.2)",
   },
@@ -1421,13 +1502,13 @@ const pd = {
   hairline: { height: 1, background: "var(--xp-bevel-shadow)", margin: "8px 0" },
   statGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px 18px" },
   statCell: { display: "flex", flexDirection: "column", gap: 2 },
-  statLabel: { fontSize: 9.5, color: "#2255A4", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.01em" },
+  statLabel: { fontSize: 9.5, color: "#8A6412", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.01em" },
   statValue: { fontSize: 13, fontWeight: 600, color: "var(--xp-text)" },
   statSub: { fontSize: 10.5, color: "var(--xp-text-faint)" },
 
   sectionDivider: {
-    fontSize: 11, fontWeight: 700, color: "#1B3B72", padding: "6px 18px",
-    background: "linear-gradient(180deg, #E7ECF7 0%, #C6D3EC 100%)",
+    fontSize: 11, fontWeight: 700, color: "#5C4508", padding: "6px 18px",
+    background: "linear-gradient(180deg, #F3EFE3 0%, #E4DBBF 100%)",
     borderTop: "1px solid var(--xp-bevel-shadow)", borderBottom: "1px solid var(--xp-bevel-shadow)",
   },
 
@@ -1435,7 +1516,7 @@ const pd = {
   invCategory: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, overflow: "hidden", background: "var(--xp-field)" },
   invCategoryHeader: { width: "100%", display: "flex", alignItems: "center", gap: 8, background: "var(--xp-window-light)", border: "none", padding: "7px 10px", color: "var(--xp-text)", textAlign: "left", borderBottom: "1px solid var(--xp-bevel-shadow)" },
   invCategoryLabel: { fontSize: 11.5, fontWeight: 700, flex: 1 },
-  invCategoryCount: { fontSize: 10.5, color: "#1B3B72", background: "#D9E4FA", border: "1px solid #AFC6E8", borderRadius: 9, padding: "0 7px", minWidth: 18, textAlign: "center" },
+  invCategoryCount: { fontSize: 10.5, color: "#5C4508", background: "#F3E9CC", border: "1px solid #D9CFAE", borderRadius: 9, padding: "0 7px", minWidth: 18, textAlign: "center" },
   invChevron: { color: "var(--xp-text-dim)", fontSize: 12, transition: "transform 0.15s ease" },
   invCategoryBody: { display: "flex", flexDirection: "column", gap: 8, padding: "9px 10px 11px" },
   invGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(136px, 1fr))", gap: 6, padding: "9px 11px" },
