@@ -18,7 +18,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
 
 <style>
   /* =========================================================
@@ -414,6 +414,62 @@
   #boot.boot-done .boot-title { text-shadow: 0 0 30px rgba(240,207,106,0.95); }
   #boot.boot-done .boot-sub { color: #F0CF6A; }
   @media (max-width: 520px) { .boot-meta { display: none; } .boot-skip { bottom: -44px; } }
+</style>
+<style id="fed-skin">
+/* Bureau skin: same brass/gold palette, new structure */
+@keyframes fed-marquee{to{transform:translateX(-50%)}}
+@keyframes fed-spin{to{transform:rotate(360deg)}}
+@keyframes fed-flick{0%,100%{opacity:1}46%{opacity:.95}50%{opacity:.8}54%{opacity:.97}}
+body::before{background:radial-gradient(ellipse at 80% -10%,rgba(180,144,30,.16),transparent 55%),radial-gradient(ellipse at 0 110%,rgba(216,179,74,.09),transparent 50%),repeating-linear-gradient(60deg,rgba(216,179,74,.04) 0 1px,transparent 1px 46px),repeating-linear-gradient(-60deg,rgba(216,179,74,.04) 0 1px,transparent 1px 46px),var(--bg)}
+.v-banner{text-align:left;padding:4px 0}
+.fb-track{display:inline-flex;animation:fed-marquee 80s linear infinite}
+.fb-track>span{white-space:pre}
+.v-brand-name,.login-name,.granted-title,.subject-name,.b-title,.v-title{font-family:'Cinzel','Times New Roman',serif}
+.v-rail{background:linear-gradient(180deg,rgba(12,16,23,.97),rgba(6,8,13,.97));box-shadow:14px 0 40px rgba(0,0,0,.35)}
+.v-brand{padding-bottom:14px;border-bottom:1px solid var(--line)}
+.v-brand-name{font-size:16px;letter-spacing:.2em}
+.v-brand-sub{letter-spacing:.1em}
+.v-top{border-bottom:3px double var(--line-2);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.v-title{font-size:19px;letter-spacing:.18em}
+.panel{background:radial-gradient(460px circle at var(--mx,50%) var(--my,0),rgba(216,179,74,.08),transparent 60%),linear-gradient(180deg,rgba(16,21,29,.94),rgba(9,12,18,.94));box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.panel::before,.panel::after{width:18px;height:18px}
+.panel-head{border-bottom:2px solid var(--line-2);background:repeating-linear-gradient(135deg,rgba(216,179,74,.07) 0 6px,transparent 6px 12px),linear-gradient(90deg,rgba(180,144,30,.3),rgba(180,144,30,0) 75%)}
+.field{border-left:2px solid var(--gold-deep)}
+.field:focus{border-left-color:var(--gold-bright)}
+.log-head{position:sticky;top:0;z-index:1}
+.log-row{border-left:2px solid transparent}
+.log-row:not(.log-head):hover{background:rgba(216,179,74,.08);border-left-color:var(--gold)}
+.case:hover,.member:hover{background:rgba(216,179,74,.07)}
+.stamp{transform:rotate(-3deg);border-width:2px;font-weight:700;letter-spacing:.2em}
+.subject-name{letter-spacing:.12em}
+.dossier-body{position:relative;overflow:hidden}
+.dossier-body::before{content:"CASE FILE";position:absolute;right:-8px;top:50%;transform:translateY(-50%) rotate(-10deg);font:700 76px 'Cinzel',serif;letter-spacing:.12em;color:rgba(216,179,74,.05);pointer-events:none;white-space:nowrap}
+.dossier-body>*{position:relative}
+.portrait{outline:1px solid var(--line);outline-offset:4px}
+.login-wrap{gap:48px;flex-wrap:wrap}
+.login-hero{width:min(440px,100%);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.lh-cap{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--gold-dim);text-transform:uppercase}
+.lh-cap b{color:var(--gold-bright);font-weight:400}
+.login-name{font-size:25px;letter-spacing:.22em}
+.login-card .panel-body{position:relative;overflow:hidden}
+.login-card .panel-body::after{content:"";position:absolute;left:0;right:0;top:-8%;height:16%;background:linear-gradient(180deg,transparent,rgba(240,207,106,.07),transparent);animation:scan-y 4.5s linear infinite;pointer-events:none}
+.granted-title{letter-spacing:.38em}
+.seal-ring{transform-origin:50% 50%;transform-box:view-box;animation:fed-spin 48s linear infinite}
+.fed-globe{position:relative;width:100%}
+.fed-globe::before{content:"";position:absolute;left:14%;top:10%;width:72%;height:72%;border-radius:50%;background:conic-gradient(rgba(240,207,106,0) 290deg,rgba(240,207,106,.22) 359deg,rgba(240,207,106,0) 360deg);animation:fed-spin 5s linear infinite}
+.fed-globe canvas{position:relative;z-index:2;display:block;width:100%;height:auto;aspect-ratio:1;animation:fed-flick 7s infinite}
+.fg-beam{position:absolute;left:14%;right:14%;bottom:7%;height:64%;z-index:1;background:linear-gradient(0deg,rgba(216,179,74,.22),rgba(216,179,74,0));clip-path:polygon(20% 100%,80% 100%,100% 0,0 0)}
+.fg-base{position:absolute;left:17%;right:17%;bottom:2%;height:12%;z-index:1;border-radius:50%;border:1px solid var(--gold);background:radial-gradient(ellipse,rgba(240,207,106,.4),transparent 70%);box-shadow:0 0 24px rgba(216,179,74,.4),inset 0 0 18px rgba(216,179,74,.3)}
+.fg-base::after{content:"";position:absolute;inset:-28% -16%;border-radius:50%;border:1px dashed rgba(216,179,74,.4)}
+.brief{max-width:1240px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 22px}
+.b-main{flex:1;min-width:0}
+.b-title{font-size:24px;letter-spacing:.08em;margin:0 0 6px}
+.b-sub{margin:0;color:var(--text-dim);font-size:14.5px;max-width:560px}
+.b-stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.b-stat{border:1px solid var(--line);background:rgba(216,179,74,.04);padding:5px 11px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase}
+.b-stat b{display:block;font-weight:400;font-size:13.5px;letter-spacing:.06em;color:var(--gold-bright)}
+.brief .fed-globe{flex:0 0 210px;width:210px}
+@media(max-width:760px){.brief .fed-globe{display:none}}
 </style>
 </head>
 <body>
@@ -2296,6 +2352,158 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </ErrorBoundary>
 );
+
+</script>
+<script>
+/* Veyrathis Operations Console: Bureau skin. DOM + canvas only; never touches your React state, endpoints or auth. */
+(() => {
+"use strict";
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- 1. Stylesheet: same brass/gold palette, new structure ---------- */
+
+/* ---------- 2. Holographic Earth ---------- */
+const LAND = [ // rough continent outlines as [lon, lat]
+  [[-168,66],[-140,70],[-110,72],[-82,70],[-62,58],[-55,48],[-70,43],[-76,35],[-81,25],[-97,26],[-96,16],[-83,9],[-78,8],[-92,15],[-105,22],[-112,30],[-118,33],[-124,40],[-125,49],[-135,58],[-150,60],[-165,55]],
+  [[-55,60],[-45,60],[-20,70],[-20,82],[-45,83],[-65,80],[-58,70]],
+  [[-78,8],[-62,11],[-50,0],[-35,-6],[-40,-22],[-50,-30],[-58,-38],[-65,-42],[-68,-52],[-72,-52],[-74,-40],[-71,-20],[-81,-5]],
+  [[-10,36],[-9,43],[-2,48],[5,52],[8,57],[12,56],[20,60],[28,70],[40,68],[40,55],[30,46],[26,40],[20,38],[12,38],[2,38]],
+  [[-17,21],[-10,35],[10,37],[22,33],[32,31],[34,28],[43,12],[51,11],[40,-2],[40,-16],[33,-26],[20,-35],[12,-18],[9,-1],[8,4],[-8,4],[-17,14]],
+  [[28,40],[40,42],[50,40],[60,45],[70,55],[80,73],[110,77],[140,72],[170,69],[180,65],[160,58],[142,52],[135,43],[122,40],[122,30],[110,20],[106,10],[100,2],[98,15],[92,22],[80,10],[72,20],[67,25],[57,25],[50,30],[43,14],[36,36]],
+  [[114,-22],[122,-18],[131,-12],[142,-11],[146,-19],[153,-27],[150,-37],[140,-38],[130,-32],[115,-34]],
+  [[-8,50],[2,51],[0,58],[-6,58]], [[130,32],[141,36],[142,44],[137,37]], [[95,5],[106,-6],[120,-9],[140,-4],[130,2],[110,2]]
+];
+const NODES = [[40.7,-74,"NYC"],[51.5,-.1,"LDN"],[35.7,139.7,"TYO"],[-33.9,151.2,"SYD"],[-23.5,-46.6,"SAO"],[25.2,55.3,"DXB"]];
+const ARCS = [[0,1],[1,5],[5,2],[2,3],[0,4],[4,1]];
+const vec = (la, lo) => { const a = la * Math.PI / 180, b = lo * Math.PI / 180; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
+const inPoly = (x, y, p) => { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) { const a = p[i], b = p[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+const LAND_V = [], GRAT = [];
+for (let la = -84; la <= 84; la += 3.4) { const stp = Math.min(40, 3.4 / Math.max(.08, Math.cos(la * Math.PI / 180))); for (let lo = -180; lo < 180; lo += stp) if (la < -72 || LAND.some(p => inPoly(lo, la, p))) LAND_V.push(vec(la, lo)); }
+for (let la = -60; la <= 60; la += 30) { const l = []; for (let lo = 0; lo <= 360; lo += 6) l.push(vec(la, lo)); GRAT.push(l); }
+for (let lo = 0; lo < 360; lo += 30) { const l = []; for (let la = -90; la <= 90; la += 6) l.push(vec(la, lo)); GRAT.push(l); }
+
+const PT = { x: 0, y: 0 }; // pointer: tilts the globe, lights the panel under the cursor
+addEventListener("pointermove", e => {
+  PT.x = (e.clientX / innerWidth - .5) * 2; PT.y = (e.clientY / innerHeight - .5) * 2;
+  const p = e.target.closest && e.target.closest(".panel");
+  if (p) { const b = p.getBoundingClientRect(); p.style.setProperty("--mx", e.clientX - b.left + "px"); p.style.setProperty("--my", e.clientY - b.top + "px"); }
+}, { passive: true });
+
+function globe(size) {
+  const wrap = document.createElement("div");
+  wrap.className = "fed-globe"; wrap.style.maxWidth = size + "px"; wrap.setAttribute("aria-hidden", "true");
+  wrap.innerHTML = '<div class="fg-beam"></div><div class="fg-base"></div>';
+  const cv = document.createElement("canvas"), ctx = cv.getContext("2d"), dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = cv.height = Math.round(size * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); wrap.appendChild(cv);
+  const S = size, cx = S / 2, cy = S * .46, R = S * .36, NV = NODES.map(n => vec(n[0], n[1]));
+  let rot = 0, last = performance.now();
+  const frame = now => {
+    rot += REDUCE ? 0 : Math.min(64, now - last) * .00022; last = now;
+    const r = rot + PT.x * .14, tl = .4 + PT.y * .1, c = Math.cos(r), s = Math.sin(r), ct = Math.cos(tl), st = Math.sin(tl);
+    const P = v => { const z0 = v[2] * c - v[0] * s; return [cx + R * (v[0] * c + v[2] * s), cy - R * (v[1] * ct - z0 * st), v[1] * st + z0 * ct]; };
+    const T = (x, y, z) => [cx + R * x, cy - R * (y * ct - z * st), y * st + z * ct];
+    const seg = (lines, fa, ba, lw) => [false, true].forEach(f => { // far side dim, near side bright
+      ctx.beginPath();
+      lines.forEach(L => L.forEach((q, i) => { const p = L[i - 1]; if (p && (p[2] + q[2] > 0) === f) { ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); } }));
+      ctx.strokeStyle = f ? fa : ba; ctx.lineWidth = lw; ctx.stroke();
+    });
+    ctx.clearRect(0, 0, S, S);
+    const g = ctx.createRadialGradient(cx, cy, R * .8, cx, cy, R * 1.22);
+    g.addColorStop(0, "rgba(216,179,74,.16)"); g.addColorStop(1, "rgba(216,179,74,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.22, 0, 7); ctx.fill();
+    ctx.fillStyle = "rgba(216,179,74,.045)"; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(240,207,106,.6)"; ctx.lineWidth = 1.2; ctx.stroke();
+    seg(GRAT.map(l => l.map(P)), "rgba(216,179,74,.26)", "rgba(216,179,74,.07)", .7);
+
+    const scan = ((now * .00032) % 1) * 2.4 - 1.2, bk = [[], [], []]; // land dots + sweeping scan band
+    LAND_V.forEach(v => { const q = P(v); if (q[2] <= 0) { bk[0].push(q); return; } q[3] = Math.max(0, 1 - Math.abs((cy - q[1]) / R - scan) / .14); bk[q[3] > 0 ? 2 : 1].push(q); });
+    ctx.fillStyle = "rgba(216,179,74,.16)"; bk[0].forEach(q => ctx.fillRect(q[0], q[1], 1.1, 1.1));
+    ctx.fillStyle = "rgba(240,207,106,.8)"; bk[1].forEach(q => ctx.fillRect(q[0] - .8, q[1] - .8, 1.7, 1.7));
+    bk[2].forEach(q => { const k = 1.7 + 1.8 * q[3]; ctx.fillStyle = "rgba(255,240,175," + (.8 + .2 * q[3]) + ")"; ctx.fillRect(q[0] - k / 2, q[1] - k / 2, k, k); });
+    if (Math.abs(scan) < 1) {
+      const y = cy - scan * R, w = R * Math.sqrt(1 - scan * scan), lg = ctx.createLinearGradient(cx - w, 0, cx + w, 0);
+      lg.addColorStop(0, "rgba(240,207,106,0)"); lg.addColorStop(.5, "rgba(240,207,106,.55)"); lg.addColorStop(1, "rgba(240,207,106,0)");
+      ctx.strokeStyle = lg; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - w, y); ctx.lineTo(cx + w, y); ctx.stroke();
+    }
+
+    ARCS.forEach(([a, b], i) => { // great-circle links with travelling packets
+      const A = NV[a], B = NV[b], om = Math.acos(Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2]))), so = Math.sin(om) || 1;
+      const at = t => { const f1 = Math.sin((1 - t) * om) / so, f2 = Math.sin(t * om) / so, h = 1 + .2 * Math.sin(Math.PI * t) * om; return P([0, 1, 2].map(k => (A[k] * f1 + B[k] * f2) * h)); };
+      ctx.beginPath(); let pen = false;
+      for (let k = 0; k <= 28; k++) { const q = at(k / 28); if (q[2] > .02) { pen ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); pen = true; } else pen = false; }
+      ctx.strokeStyle = "rgba(240,207,106,.5)"; ctx.lineWidth = 1; ctx.stroke();
+      const pk = at((now * .00016 + i * .17) % 1);
+      if (pk[2] > .02) { ctx.fillStyle = "#FFF0AF"; ctx.shadowColor = "#F0CF6A"; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(pk[0], pk[1], 2, 0, 7); ctx.fill(); ctx.shadowBlur = 0; }
+    });
+
+    ctx.font = Math.max(8, S * .026) + "px 'Share Tech Mono',monospace"; // node markers
+    NV.forEach((v, i) => {
+      const q = P(v); if (q[2] < .05) return; const ph = (now * .0006 + i * .27) % 1;
+      ctx.fillStyle = "#F0CF6A"; ctx.beginPath(); ctx.arc(q[0], q[1], 2.4, 0, 7); ctx.fill();
+      ctx.strokeStyle = "rgba(240,207,106," + .7 * (1 - ph) + ")"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(q[0], q[1], 3 + ph * 12, 0, 7); ctx.stroke();
+      ctx.fillStyle = "rgba(234,227,206,.85)"; ctx.fillText(NODES[i][2], q[0] + 8, q[1] - 7);
+    });
+
+    const ring = []; for (let k = 0; k <= 90; k++) { const a = k / 90 * Math.PI * 2, x = 1.36 * Math.cos(a); ring.push(T(x * .9, x * .43, 1.36 * Math.sin(a))); }
+    seg([ring], "rgba(240,207,106,.5)", "rgba(216,179,74,.12)", 1); // orbit ring + satellite
+    const sa = now * .0007, sx = 1.36 * Math.cos(sa), sp = T(sx * .9, sx * .43, 1.36 * Math.sin(sa));
+    ctx.fillStyle = sp[2] > 0 ? "#FFF0AF" : "rgba(216,179,74,.4)"; ctx.beginPath(); ctx.arc(sp[0], sp[1], 3, 0, 7); ctx.fill();
+  };
+  frame(last);
+  if (!REDUCE) requestAnimationFrame(function loop(t) { if (!cv.isConnected) return; frame(t); requestAnimationFrame(loop); });
+  return wrap;
+}
+
+/* ---------- 3. Original bureau seal (not any real agency's insignia) ---------- */
+const seal = sz => {
+  const id = "sl" + Math.random().toString(36).slice(2, 8), ring = sz >= 80;
+  return '<svg class="fed-seal" width="' + sz + '" height="' + sz + '" viewBox="0 0 100 100" aria-hidden="true" style="flex:0 0 ' + sz + 'px"><defs><path id="' + id + '" d="M50,50 m-39,0 a39,39 0 1,1 78,0 a39,39 0 1,1 -78,0"/></defs>' +
+    '<circle cx="50" cy="50" r="47" fill="none" stroke="#D8B34A" stroke-width="' + (ring ? 1 : 2.4) + '"/>' +
+    (ring ? '<circle cx="50" cy="50" r="31" fill="none" stroke="#D8B34A" stroke-opacity=".55" stroke-width=".8"/><g class="seal-ring"><text font-size="6.6" letter-spacing="1.2" fill="#D8B34A" font-family="Share Tech Mono,monospace"><textPath href="#' + id + '">VEYRATHIS BUREAU OF OPERATIONS \u2022 RESTRICTED \u2022 </textPath></text></g>' : "") +
+    '<polygon points="50,23 72,36 72,64 50,77 28,64 28,36" fill="rgba(216,179,74,.09)" stroke="#D8B34A" stroke-width="' + (ring ? 1.6 : 3) + '"/><polygon points="50,38 62,50 50,62 38,50" fill="#D8B34A"/></svg>';
+};
+
+/* ---------- 4. Attach to the React-rendered DOM (idempotent) ---------- */
+const MSG = "RESTRICTED // VEYRATHIS BUREAU OF OPERATIONS // AUTHORIZED PERSONNEL ONLY // ALL ACCESS IS LOGGED AND ATTRIBUTED // ";
+function enhance() {
+  document.querySelectorAll(".v-banner:not([data-f])").forEach(b => { // scrolling classification ticker
+    b.setAttribute("data-f", 1); b.innerHTML = '<span class="fb-track"><span>' + MSG.repeat(5) + "</span><span>" + MSG.repeat(5) + "</span></span>";
+  });
+  document.querySelectorAll('svg[viewBox="0 0 32 32"]:not([data-f])').forEach(s => { // swap the glyph for the seal
+    s.setAttribute("data-f", 1); const pc = s.parentElement.classList;
+    s.insertAdjacentHTML("beforebegin", seal(pc.contains("login-brand") ? 96 : pc.contains("granted") ? 112 : 40)); s.style.display = "none";
+  });
+  document.querySelectorAll(".v-brand-sub:not([data-f])").forEach(n => { n.setAttribute("data-f", 1); n.textContent = "BUREAU OF OPERATIONS"; });
+
+  const lc = document.querySelector(".login-card:not([data-f])"); // login: hero globe beside the card
+  if (lc) {
+    lc.setAttribute("data-f", 1); const wrap = lc.parentElement;
+    if (lc.querySelector("form") && wrap.classList.contains("login-wrap") && !wrap.querySelector(":scope > .login-hero")) {
+      const h = document.createElement("div"); h.className = "login-hero"; h.appendChild(globe(440));
+      h.insertAdjacentHTML("beforeend", '<div class="lh-cap"><b>Global uplink</b></div><div class="lh-cap">Veyrathis Bureau of Operations \u00b7 Secure terminal</div>');
+      wrap.insertBefore(h, lc);
+    }
+  }
+
+  const vc = document.querySelector(".v-content"); // console: briefing strip above every section
+  if (vc) {
+    let b = vc.querySelector(":scope > .brief");
+    if (!b) {
+      b = document.createElement("section"); b.className = "panel brief";
+      b.innerHTML = '<div class="b-main"><div class="b-title"></div><p class="b-sub">Every action in this console is logged and attributed to your account.</p><div class="b-stats"></div></div>';
+      b.appendChild(globe(210)); vc.insertBefore(b, vc.firstChild);
+    }
+    const txt = s => (document.querySelector(s) || {}).textContent || "", m = document.querySelectorAll(".v-operator .v-op-meta");
+    const name = "Welcome, " + txt(".v-op-name"), t = b.querySelector(".b-title"); if (t.textContent !== name) t.textContent = name;
+    const html = [["Clearance", m[1] ? m[1].textContent : ""], ["Role", m[0] ? m[0].textContent : ""], ["Audit trail", "Active"]].map(x => '<div class="b-stat">' + x[0] + "<b>" + x[1] + "</b></div>").join("");
+    const st = b.querySelector(".b-stats"); if (st.getAttribute("data-s") !== html) { st.setAttribute("data-s", html); st.innerHTML = html; }
+  }
+}
+let queued = 0;
+const run = () => { queued = 0; try { enhance(); } catch (e) { console.warn("[veyrathis-skin]", e); } };
+new MutationObserver(() => { if (!queued) queued = requestAnimationFrame(run); }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+run();
+})();
 
 </script>
 </body>
