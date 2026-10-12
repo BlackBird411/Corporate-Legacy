@@ -145,7 +145,7 @@ const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login-function";
 // NOTE: this endpoint does not exist yet — see the Supabase setup notes
 // at the end of this file for the table + edge function to add.
 const LIST_ACTIVITY_URL = SUPABASE_URL + "/functions/v1/list-admin-activity";
-
+const LIST_MOD_URL = SUPABASE_URL + "/functions/v1/list-mod-incidents";
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 // =========================================================
@@ -523,6 +523,7 @@ const ACTIVITY_EVENT_LABELS = {
   login: "Signed in",
   logout: "Signed out",
   view_tab: "Opened tab",
+    mod_lookup: "Looked up moderation record",
   player_search: "Searched player",
   credits_action: "Set credits / XP",
   inventory_grant: "Granted item",
@@ -1064,13 +1065,247 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
     </div>
   );
 }
+// =========================================================
+// Moderation — look up a player's warns / strikes / kicks / bans.
+// Reads mod_incidents (the same rows the Discord webhook mirrors).
+// =========================================================
+const MOD_TYPE_STYLES = {
+  WARN:   { color: "#8A6412", bg: "#FBF1CF" },
+  STRIKE: { color: "#A8520A", bg: "#FBE5CF" },
+  KICK:   { color: "#2C5F8A", bg: "#E1EDF7" },
+  BAN:    { color: "#A02A1E", bg: "#FBEAE4" },
+  UNBAN:  { color: "#2E7D2E", bg: "#E6F2E6" },
+};
+const MOD_TYPES = ["WARN", "STRIKE", "KICK", "BAN", "UNBAN"];
 
+function formatModDuration(sec) {
+  if (sec === null || sec === undefined) return null;
+  if (sec < 1) return "Permanent";
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return [d && `${d}d`, h && `${h}h`, m && `${m}m`].filter(Boolean).join(" ") || `${sec}s`;
+}
+
+async function fetchModIncidents(token, userId) {
+  const res = await fetch(LIST_MOD_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(userId ? { roblox_user_id: Number(userId) } : {}),
+  });
+  const json = await res.json();
+  if (!res.ok || json.error) throw new Error(json.error || "Lookup failed.");
+  return json;
+}
+
+function ModerationPanel({ token }) {
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [incidents, setIncidents] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [subject, setSubject] = useState(null); // { userId, name } while viewing one player
+  const [typeFilter, setTypeFilter] = useState("ALL");
+
+  const loadFeed = useCallback(async () => {
+    setLoading(true); setError(null); setSubject(null); setSummary(null); setTypeFilter("ALL");
+    try {
+      const json = await fetchModIncidents(token, null);
+      setIncidents(json.incidents || []);
+    } catch (err) {
+      setError(err.message || "Network error loading moderation records.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { if (token) loadFeed(); }, [loadFeed, token]);
+
+  async function openPlayer(userId, name) {
+    setLoading(true); setError(null); setTypeFilter("ALL");
+    try {
+      const json = await fetchModIncidents(token, userId);
+      setIncidents(json.incidents || []);
+      setSummary(json.summary || null);
+      setSubject({ userId: String(userId), name: name || null });
+    } catch (err) {
+      setError(err.message || "Network error loading moderation records.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    if (/^\d+$/.test(q)) return openPlayer(q, null);
+
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch(ROBLOX_LOOKUP_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ username: q }),
+      });
+      const j = await res.json();
+      if (!res.ok || j.error || !j.data?.length) {
+        setError(j.error || "No Roblox user found with that username.");
+        setLoading(false);
+        return;
+      }
+      await openPlayer(j.data[0].id, j.data[0].name);
+    } catch (err) {
+      setError("Network error resolving that username.");
+      setLoading(false);
+    }
+  }
+
+  const shown = typeFilter === "ALL" ? incidents : incidents.filter(r => r.type === typeFilter);
+  const displayName = subject
+    ? (subject.name || incidents[0]?.target_name || `UserId ${subject.userId}`)
+    : null;
+
+  function banBadge() {
+    if (!summary) return null;
+    const st = summary.ban_status;
+    if (st === "permanent") return { text: "BANNED — permanent", color: "var(--xp-red)" };
+    if (st === "active") return { text: `BANNED — until ${new Date(summary.ban_expires_at).toLocaleString()}`, color: "var(--xp-red)" };
+    if (st === "expired") return { text: "Last ban expired", color: "var(--xp-text-faint)" };
+    if (st === "lifted") return { text: "Ban lifted", color: "var(--xp-green)" };
+    return { text: "No bans on record", color: "var(--xp-text-faint)" };
+  }
+  const badge = banBadge();
+
+  return (
+    <div style={md.wrap}>
+      <form onSubmit={handleSearch} style={md.searchRow}>
+        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Search by Roblox UserId or username" style={{ ...s.input, flex: 1 }} />
+        <button type="submit" disabled={loading || !query.trim()} style={s.primaryButton}>
+          {loading ? "Searching…" : "Search"}
+        </button>
+        {subject && <button type="button" onClick={loadFeed} style={s.secondaryButton}>Recent</button>}
+      </form>
+
+      {error && <div style={s.errorBox}>⚠ {error}</div>}
+
+      {subject && summary && (
+        <div style={md.summaryBox}>
+          <img src={avatarHeadshotUrl(subject.userId)} alt={displayName} style={md.portrait}
+            onError={(e) => { e.target.style.opacity = 0.15; }} />
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={pd.name}>{displayName}</div>
+            <div style={pd.userIdLine}>UserId {subject.userId}</div>
+            <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: badge.color }}>{badge.text}</div>
+            <div style={{ marginTop: 2, fontSize: 11.5, color: "var(--xp-text-dim)" }}>
+              Current strikes: <b>{summary.current_strikes}</b>
+            </div>
+          </div>
+          <div style={md.chipRow}>
+            {MOD_TYPES.map(t => (
+              <span key={t} style={{ ...md.chip, color: MOD_TYPE_STYLES[t].color, background: MOD_TYPE_STYLES[t].bg, borderColor: MOD_TYPE_STYLES[t].color }}>
+                {t} · {summary.counts[t] || 0}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={s.panelBox}>
+        <div style={s.panelBar}>
+          <span style={s.panelBarLeft}>
+            <span>{subject ? `Records — ${displayName}` : "Recent moderation activity"}</span>
+          </span>
+          <span style={s.winBtnRow}>
+            <button onClick={() => (subject ? openPlayer(subject.userId, subject.name) : loadFeed())}
+              style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh">⟳</button>
+          </span>
+        </div>
+        <div style={s.panelBody}>
+          <div style={{ ...s.row, marginBottom: 12, alignItems: "center" }}>
+            <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }}>Type</label>
+            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+              style={{ ...s.input, width: "auto", flex: "0 0 160px" }}>
+              <option value="ALL">All types</option>
+              {MOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {!error && !loading && shown.length === 0 && (
+            <div style={s.empty}>
+              {subject ? "No moderation records on file for this player." : "No moderation activity logged yet."}
+            </div>
+          )}
+
+          <div style={md.list}>
+            {shown.map(r => {
+              const st = MOD_TYPE_STYLES[r.type] || { color: "var(--xp-text-dim)", bg: "var(--xp-window-light)" };
+              const dur = formatModDuration(r.duration_seconds);
+              return (
+                <div key={r.incident_id} style={md.card}>
+                  <div style={md.cardTop}>
+                    <span style={{ ...md.badge, color: st.color, background: st.bg, borderColor: st.color }}>{r.type}</span>
+                    <span style={md.incId}>{r.incident_id}</span>
+                    <span style={md.time}>{new Date(r.created_at).toLocaleString()}</span>
+                  </div>
+                  {!subject && (
+                    <div style={md.target}>
+                      <b>{r.target_name || `uid:${r.target_user_id}`}</b>
+                      <span style={md.dim}> ({r.target_user_id})</span>
+                      <button type="button" style={md.linkBtn}
+                        onClick={() => openPlayer(r.target_user_id, r.target_name)}>View record</button>
+                    </div>
+                  )}
+                  <div style={md.reason}>{r.reason || "No reason provided"}</div>
+                  <div style={md.meta}>
+                    <span>Moderator: <b>{r.moderator_name || "unknown"}</b>{r.moderator_id ? ` (${r.moderator_id})` : ""}</span>
+                    {dur && <span>Duration: <b>{dur}</b></span>}
+                    {r.expires_at && <span>Expires: <b>{new Date(r.expires_at).toLocaleString()}</b></span>}
+                    {r.strikes != null && <span>Strike total: <b>{r.strikes}</b></span>}
+                  </div>
+                  {r.notes && <div style={md.notes}>Private notes: {r.notes}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const md = {
+  wrap: { display: "flex", flexDirection: "column", gap: 14, padding: "16px 20px 30px", maxWidth: 900 },
+  searchRow: { display: "flex", gap: 8, alignItems: "center" },
+  summaryBox: {
+    display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", padding: 14,
+    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
+    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
+  },
+  portrait: { width: 64, height: 64, objectFit: "cover", border: "2px solid #A99060", borderRadius: 2, background: "var(--xp-field)" },
+  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+  chip: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "2px 8px" },
+  list: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 560, overflowY: "auto" },
+  card: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)", padding: "9px 11px", display: "flex", flexDirection: "column", gap: 5 },
+  cardTop: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  badge: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "1px 8px" },
+  incId: { fontSize: 11, color: "var(--xp-text-dim)", fontFamily: "monospace" },
+  time: { fontSize: 10.5, color: "var(--xp-text-faint)", marginLeft: "auto" },
+  target: { fontSize: 12, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" },
+  dim: { color: "var(--xp-text-faint)" },
+  linkBtn: { background: "transparent", border: "none", color: "var(--xp-text-link)", textDecoration: "underline", fontSize: 11, padding: "0 6px" },
+  reason: { fontSize: 12.5, color: "var(--xp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+  meta: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "var(--xp-text-dim)" },
+  notes: { fontSize: 11, color: "var(--xp-text-faint)", fontStyle: "italic", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+};
 // =========================================================
 // Sidebar nav
 // =========================================================
 const NAV_ITEMS = [
   { key: "actions", label: "Actions" },
   { key: "personnel", label: "Personnel" },
+    { key: "moderation", label: "Moderation" },
   { key: "activity", label: "Activity Log" },
 ];
 
@@ -1116,7 +1351,7 @@ function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
 // =========================================================
 function TopStrip({ pendingCount, lastSync, activeTab }) {
   const now = useClock();
-  const titleMap = { actions: "Actions Overview", inventory: "Inventory Overview", personnel: "Personnel Overview", activity: "Activity Log" };
+ const titleMap = { actions: "Actions Overview", inventory: "Inventory Overview", personnel: "Personnel Overview", moderation: "Moderation Records", activity: "Activity Log" };
   return (
     <div style={s.topStrip}>
       <div style={s.topStripLeft}>
@@ -1236,7 +1471,11 @@ function App() {
               <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} />
             </main>
           )}
-
+          {activeTab === "moderation" && (
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }}>
+              <ModerationPanel token={token} />
+            </main>
+          )}
           {activeTab === "activity" && (
             <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }}>
               <ActivityLog token={token} />
