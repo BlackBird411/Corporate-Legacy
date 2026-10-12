@@ -5,117 +5,357 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
 <meta name="theme-color" content="#05070b" />
-<title>Veyrathis — Admin Console</title>
+<meta name="color-scheme" content="dark" />
+<title>Veyrathis — Operations Console</title>
 
 <!-- Single source of truth for the backend URL (used by the boot screen and the app). -->
 <script>window.VEY_CONFIG = { SUPABASE_URL: "https://ngfkmluzrgbphgowrrul.supabase.co" };</script>
 
-<!-- React + ReactDOM (UMD) and Babel, pinned to exact versions. `defer` lets the boot
-     screen paint immediately while these download. Order is preserved. -->
+<!-- React + ReactDOM (UMD) and Babel, pinned. `defer` lets the boot screen paint first. -->
 <script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script defer src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
   /* =========================================================
-     Veyra — vintage browser-chrome admin console
-     Paper-white surfaces, brass/gold rules. Variable names are kept
-     as --xp-* since they're referenced throughout the style objects.
+     VEYRATHIS OPERATIONS CONSOLE — classified-terminal skin
+     Same brass/gold palette as before, set on near-black surfaces.
      ========================================================= */
   :root {
-    --xp-desktop: #D8D3C4;
-    --xp-desktop-dark: #C7C1AE;
-    --xp-window: #FFFFFF;
-    --xp-window-light: #FBFAF6;
-    --xp-panel-inset: #FFFFFF;
-    --xp-field: #FFFFFF;
+    color-scheme: dark;
 
-    --xp-title-l: #8A6412;
-    --xp-title-m: #B4901E;
-    --xp-title-r: #8A6412;
-    --xp-title-glow: #D8B34A;
-    --xp-title-inactive-l: #A99A76;
-    --xp-title-inactive-r: #C2B590;
+    --bg: #05070b;
+    --panel: #0b0f16;
+    --field: #070a10;
 
-    --xp-bevel-light: #FFFFFF;
-    --xp-bevel-lightest: #FDFCF8;
-    --xp-bevel-shadow: #C8C2AE;
-    --xp-bevel-dark: #8C8672;
-    --xp-field-border-top: #B7AE94;
-    --xp-field-border-bottom: #EFEBDD;
+    --gold: #D8B34A;
+    --gold-bright: #F0CF6A;
+    --gold-core: #B4901E;
+    --gold-deep: #8A6412;
+    --gold-dim: #A8996A;
 
-    --xp-text: #1A1A16;
-    --xp-text-dim: #4A463C;
-    --xp-text-faint: #746E5C;
-    --xp-text-titlebar: #FFFFFF;
-    --xp-text-link: #7A4E00;
+    --line: rgba(216, 179, 74, 0.22);
+    --line-2: rgba(216, 179, 74, 0.45);
 
-    --xp-selected: #B4901E;
-    --xp-selected-bg: #F3E9CC;
+    --text: #EAE3CE;
+    --text-dim: #B7AE92;
+    --text-faint: #7E7761;
 
-    --xp-green: #2E7D2E;
-    --xp-green-bright: #3D9B3D;
-    --xp-green-dim: #E6F2E6;
-    --xp-red: #A02A1E;
-    --xp-red-bright: #C23A28;
-    --xp-red-dim: #FBEAE4;
-    --xp-gold: #8A6412;
-    --xp-gold-bright: #B4901E;
+    --green: #5BC98A;
+    --red: #E0603C;
+    --blue: #5AA9E6;
 
-    --sans: 'Tahoma', 'Trebuchet MS', 'Segoe UI', Verdana, Arial, sans-serif;
-    --sans-display: 'Trebuchet MS', 'Tahoma', Verdana, Arial, sans-serif;
+    --mono: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', Consolas, Menlo, monospace;
+    --body: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --display: 'Orbitron', 'Rajdhani', 'Segoe UI', sans-serif;
   }
   * { box-sizing: border-box; }
-  html, body, #root { height: 100%; margin: 0; }
+  html, body { margin: 0; min-height: 100%; }
   body {
-    background: var(--xp-desktop);
-    color: var(--xp-text);
-    font-family: var(--sans);
-    font-size: 12px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 500;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
-  #root { height: auto; min-height: 100%; }
+  body::before {            /* grid + glow behind everything */
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 78% -12%, rgba(180,144,30,0.14), transparent 55%),
+      radial-gradient(ellipse at -5% 112%, rgba(216,179,74,0.08), transparent 50%),
+      linear-gradient(rgba(216,179,74,0.045) 1px, transparent 1px) 0 0 / 48px 48px,
+      linear-gradient(90deg, rgba(216,179,74,0.045) 1px, transparent 1px) 0 0 / 48px 48px,
+      var(--bg);
+  }
+  body::after {             /* fine CRT line texture */
+    content: ""; position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.016) 0, rgba(255,255,255,0.016) 1px, transparent 1px, transparent 3px);
+  }
   button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   button { cursor: pointer; }
-  button:disabled { cursor: not-allowed; opacity: 0.55; }
-  a { color: var(--xp-text-link); }
-  :focus-visible { outline: 1px dotted #000000; outline-offset: 1px; }
-  ::selection { background: var(--xp-selected); color: #fff; }
-  ::-webkit-scrollbar { width: 16px; height: 16px; }
-  ::-webkit-scrollbar-track { background: var(--xp-window); border-left: 1px solid var(--xp-bevel-shadow); }
-  ::-webkit-scrollbar-thumb { background: var(--xp-window); border: 1px solid var(--xp-bevel-shadow); box-shadow: inset 1px 1px 0 var(--xp-bevel-light), inset -1px -1px 0 var(--xp-bevel-dark); }
-  ::-webkit-scrollbar-thumb:hover { background: #DEDACB; }
-
-  select { background-color: var(--xp-field); color: var(--xp-text); border: 1px solid var(--xp-field-border-top); }
-  select option { background-color: var(--xp-field); color: var(--xp-text); }
-  input[type="number"] { background-color: var(--xp-field); color: var(--xp-text); }
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { opacity: 0.85; }
-  input[type="checkbox"] { accent-color: #8A6412; }
+  button:disabled { cursor: not-allowed; opacity: 0.45; }
+  a { color: var(--gold-bright); }
+  :focus-visible { outline: 1px solid var(--gold-bright); outline-offset: 2px; }
+  ::selection { background: var(--gold-core); color: #07090d; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  ::-webkit-scrollbar-thumb { background: rgba(216,179,74,0.35); }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(216,179,74,0.6); }
 
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  @keyframes fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @keyframes dialog-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  @keyframes scan-y { 0% { top: -8%; } 100% { top: 108%; } }
+  @keyframes granted-life { 0% { opacity: 0; } 14% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+  @keyframes granted-in { from { opacity: 0; letter-spacing: 0.9em; filter: blur(6px); } to { opacity: 1; letter-spacing: 0.38em; filter: none; } }
+  @keyframes line-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
 
-  /* ---------- responsive behaviour for the inline-styled layout ---------- */
-  @media (max-width: 900px) {
-    .vey-shell { flex-direction: column; }
-    .vey-sidebar { width: auto !important; border-right: none !important; border-bottom: 1px solid var(--xp-bevel-shadow); }
-    .vey-nav { flex-direction: row !important; flex-wrap: wrap; margin-bottom: 12px !important; }
-    .vey-sidebar-footer { flex-direction: row !important; align-items: center; justify-content: space-between; }
-    .vey-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
-    .vey-dossier-body { flex-direction: column; align-items: center; }
-    .vey-stat-grid { grid-template-columns: 1fr 1fr !important; }
+  /* ---------------- classification banner ---------------- */
+  .v-banner {
+    background: linear-gradient(90deg, #8A6412, #D8B34A 50%, #8A6412);
+    color: #120d02; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.2em;
+    text-align: center; padding: 3px 12px; text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  @media (max-width: 700px) {
-    .vey-top-strip { flex-direction: column; align-items: flex-start !important; gap: 6px; }
-    .vey-top-right { flex-wrap: wrap; gap: 10px !important; }
-    .vey-desktop { padding: 0 !important; }
+
+  /* ---------------- app frame ---------------- */
+  .v-app { min-height: 100vh; display: flex; flex-direction: column; }
+  .v-shell { flex: 1; display: flex; min-height: 0; }
+  .v-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .v-content { flex: 1; padding: 22px 26px 34px; }
+
+  /* ---------------- left rail ---------------- */
+  .v-rail {
+    width: 244px; flex: 0 0 244px; padding: 18px 16px; display: flex; flex-direction: column; gap: 16px;
+    border-right: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(14,19,27,0.94), rgba(8,11,17,0.94));
+  }
+  .v-brand { display: flex; align-items: center; gap: 12px; }
+  .v-brand-name { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: 0.22em; color: var(--gold-bright); }
+  .v-brand-sub { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--text-faint); margin-top: 2px; }
+
+  .v-operator { border: 1px solid var(--line); padding: 11px 12px; display: flex; gap: 11px; align-items: center; background: rgba(216,179,74,0.04); position: relative; }
+  .v-operator::before { content: ""; position: absolute; top: -1px; left: -1px; width: 9px; height: 9px; border-top: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+  .v-avatar { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border: 1px solid var(--line-2); font-family: var(--display); font-size: 13px; color: var(--gold-bright); background: #06080d; }
+  .v-op-name { font-weight: 700; font-size: 16px; letter-spacing: 0.04em; word-break: break-all; line-height: 1.1; }
+  .v-op-meta { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; color: var(--gold-dim); margin-top: 3px; text-transform: uppercase; }
+
+  .v-nav-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.22em; color: var(--text-faint); text-transform: uppercase; }
+  .v-nav { display: flex; flex-direction: column; gap: 4px; }
+  .v-nav-item {
+    position: relative; text-align: left; background: transparent; border: 1px solid transparent; color: var(--text-dim);
+    padding: 10px 12px 10px 16px; font-weight: 700; font-size: 14.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    transition: color .15s, background .15s, border-color .15s;
+  }
+  .v-nav-item::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 2px; background: transparent; transition: background .15s, box-shadow .15s; }
+  .v-nav-item:hover { color: var(--gold-bright); background: rgba(216,179,74,0.06); }
+  .v-nav-item.active { color: var(--gold-bright); background: linear-gradient(90deg, rgba(216,179,74,0.16), rgba(216,179,74,0.02)); border-color: var(--line); }
+  .v-nav-item.active::before { background: var(--gold-bright); box-shadow: 0 0 10px rgba(240,207,106,0.8); }
+  .v-rail-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .v-rail-note { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; color: var(--text-faint); line-height: 1.6; }
+
+  /* ---------------- top bar ---------------- */
+  .v-top {
+    display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+    padding: 12px 26px; border-bottom: 1px solid var(--line); background: rgba(8,11,17,0.82);
+  }
+  .v-crumb { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--text-faint); text-transform: uppercase; }
+  .v-crumb b { color: var(--gold); font-weight: 400; }
+  .v-title { margin: 2px 0 0; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: 0.16em; color: var(--text); text-transform: uppercase; }
+  .v-vitals { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; }
+  .v-vital { display: flex; align-items: center; gap: 7px; }
+  .v-vital-k { color: var(--text-faint); letter-spacing: 0.14em; }
+  .v-vital-v { color: var(--text); }
+
+  .led { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: 0 0 7px; background: var(--c, var(--green)); box-shadow: 0 0 8px var(--c, var(--green)); }
+  .led.pulse { animation: blink 2s ease-in-out infinite; }
+
+  /* ---------------- panels ---------------- */
+  .panel {
+    position: relative; border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(16,21,29,0.92), rgba(10,14,20,0.92));
+    animation: fade-in .28s ease-out;
+  }
+  .panel::before, .panel::after { content: ""; position: absolute; width: 13px; height: 13px; border: 0 solid var(--gold); pointer-events: none; }
+  .panel::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+  .panel::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 14px;
+    border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(180,144,30,0.22), rgba(180,144,30,0) 72%);
+  }
+  .panel-title { font-family: var(--display); font-weight: 500; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-bright); display: flex; align-items: center; gap: 10px; }
+  .panel-title::before { content: ""; width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); flex: 0 0 7px; }
+  .panel-actions { display: flex; align-items: center; gap: 8px; }
+  .panel-body { padding: 16px; }
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; color: var(--gold-dim); border: 1px solid var(--line-2); padding: 1px 8px; text-transform: uppercase; white-space: nowrap; }
+  .icon-btn { background: transparent; border: 1px solid var(--line-2); color: var(--gold-bright); width: 26px; height: 24px; line-height: 1; font-size: 14px; }
+  .icon-btn:hover:not(:disabled) { background: rgba(216,179,74,0.14); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; max-width: 1180px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 920px; }
+  .staff-layout { display: grid; grid-template-columns: minmax(310px, 390px) 1fr; gap: 20px; align-items: start; max-width: 1240px; }
+
+  /* ---------------- forms ---------------- */
+  .col { display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row.wrap { flex-wrap: wrap; }
+  .grow { flex: 1; min-width: 0; }
+  .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-dim); }
+  .lbl-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .field {
+    width: 100%; background: var(--field); color: var(--text); border: 1px solid var(--line); border-bottom-color: var(--line-2);
+    border-radius: 0; padding: 9px 11px; font-family: var(--mono); font-size: 13.5px; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field::placeholder { color: var(--text-faint); }
+  .field:focus { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(216,179,74,0.35), 0 0 16px rgba(216,179,74,0.16); }
+  .field:disabled { opacity: 0.55; }
+  select.field { cursor: pointer; }
+  select.field option { background: #0b0f16; color: var(--text); }
+  .field.sm { padding: 6px 8px; font-size: 12.5px; }
+  .field.qty { width: 62px; text-align: center; padding-left: 4px; padding-right: 4px; }
+  input[type="checkbox"] { accent-color: #D8B34A; }
+
+  .fs { border: 1px solid var(--line); margin: 0; padding: 14px 12px 12px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .fs legend { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; color: var(--gold); padding: 0 7px; text-transform: uppercase; }
+
+  .btn {
+    font-family: var(--display); font-weight: 500; font-size: 11.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 10px 20px; border: 1px solid var(--gold); background: transparent; color: var(--gold-bright);
+    transition: background .15s, color .15s, box-shadow .15s, filter .15s; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { background: rgba(216,179,74,0.14); box-shadow: 0 0 14px rgba(216,179,74,0.22); }
+  .btn-primary {
+    background: linear-gradient(180deg, #F0CF6A, #C9A237 55%, #B4901E); color: #120d02; border-color: #F0CF6A; font-weight: 700;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, #FFE08A, #D8B34A 55%, #C9A237); box-shadow: none; filter: drop-shadow(0 0 8px rgba(240,207,106,0.5)); }
+  .btn-danger { border-color: var(--red); color: #FFB4A0; }
+  .btn-danger:hover:not(:disabled) { background: rgba(224,96,60,0.18); box-shadow: 0 0 14px rgba(224,96,60,0.25); }
+  .btn-danger.solid { background: linear-gradient(180deg, #E0603C, #A83A1F); color: #fff; font-weight: 700; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+  .btn-sm { padding: 6px 12px; font-size: 10.5px; letter-spacing: 0.14em; }
+  .btn-link { background: none; border: none; color: var(--gold-bright); text-decoration: underline; padding: 0 6px; font-size: 12.5px; }
+
+  .note { border: 1px solid var(--line); border-left: 3px solid var(--c, var(--gold)); background: color-mix(in srgb, var(--c, var(--gold)) 10%, transparent); padding: 9px 12px; font-size: 14px; line-height: 1.45; }
+  .note.err { --c: var(--red); color: #FFC4B2; }
+  .note.ok { --c: var(--green); color: #BDEBD0; }
+  .note.warn { --c: var(--gold); color: var(--gold-bright); }
+  .empty { color: var(--text-faint); font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em; padding: 24px 0; text-align: center; }
+
+  .badge { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c); border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); padding: 1px 8px; white-space: nowrap; }
+
+  /* ---------------- log tables ---------------- */
+  .log-scroll { overflow-x: auto; border: 1px solid var(--line); }
+  .log { min-width: 560px; }
+  .log-row { display: grid; grid-template-columns: var(--cols); gap: 10px; align-items: baseline; padding: 7px 12px; border-bottom: 1px solid rgba(216,179,74,0.08); font-family: var(--mono); font-size: 12.5px; }
+  .log-row:nth-child(even) { background: rgba(216,179,74,0.03); }
+  .log-head { background: rgba(216,179,74,0.1) !important; color: var(--gold); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+  .log-feed { max-height: 420px; overflow-y: auto; }
+  .log-sub { grid-column: 1 / -1; color: var(--text-faint); font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .c-faint { color: var(--text-faint); } .c-dim { color: var(--text-dim); } .c-gold { color: var(--gold-bright); }
+  .ta-r { text-align: right; }
+  .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------------- personnel dossier ---------------- */
+  .dossier-body { display: flex; gap: 24px; padding: 20px 18px; }
+  .portrait { position: relative; width: 104px; height: 104px; border: 1px solid var(--line-2); background: #05070b; overflow: hidden; flex: 0 0 104px; }
+  .portrait img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.4) sepia(0.35) contrast(1.05); display: block; }
+  .portrait::after { content: ""; position: absolute; left: 0; right: 0; height: 22%; top: -8%; background: linear-gradient(180deg, transparent, rgba(240,207,106,0.28), transparent); animation: scan-y 3.2s linear infinite; pointer-events: none; }
+  .stamp { margin-top: 9px; text-align: center; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 6px; color: var(--green); border: 1px solid var(--green); background: color-mix(in srgb, var(--green) 10%, transparent); }
+  .stamp.bad { color: var(--red); border-color: var(--red); background: color-mix(in srgb, var(--red) 10%, transparent); }
+  .subject-name { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: 0.1em; color: var(--text); }
+  .subject-id { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: var(--text-faint); margin-top: 2px; }
+  .credit-chip { font-family: var(--mono); font-size: 12.5px; color: var(--gold-bright); border: 1px solid var(--gold); padding: 3px 11px; background: rgba(216,179,74,0.1); }
+  .hair { height: 1px; background: var(--line); margin: 12px 0; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 20px; }
+  .stat-k { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--gold-dim); text-transform: uppercase; }
+  .stat-v { font-family: var(--mono); font-size: 15px; color: var(--text); margin-top: 2px; }
+  .stat-s { font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .section-bar { padding: 7px 18px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); background: rgba(216,179,74,0.09); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .inv-wrap { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px 18px; }
+  .cat { border: 1px solid var(--line); background: rgba(5,7,11,0.5); }
+  .cat-head { width: 100%; display: flex; align-items: center; gap: 9px; background: rgba(216,179,74,0.05); border: none; border-bottom: 1px solid var(--line); padding: 8px 12px; color: var(--text); text-align: left; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-size: 13px; }
+  .cat-head .chev { color: var(--gold); transition: transform .15s; }
+  .cat-count { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--gold-bright); border: 1px solid var(--line-2); padding: 0 8px; }
+  .cat-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 9px; }
+  .held { display: grid; grid-template-columns: minmax(0,1fr) auto 62px auto; gap: 9px; align-items: center; padding: 6px 10px; border: 1px solid var(--line); background: rgba(216,179,74,0.03); }
+  .held-name { font-weight: 700; letter-spacing: 0.03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .held-count { font-family: var(--mono); color: var(--gold-bright); font-size: 12.5px; }
+  .add-wrap { border-top: 1px dashed var(--line-2); padding-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .add-row { display: grid; grid-template-columns: minmax(0,1fr) 62px auto; gap: 9px; align-items: center; }
+  .hist { margin: 0 18px 18px; border: 1px solid var(--line); }
+  .hist-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid rgba(216,179,74,0.08); font-family: var(--mono); font-size: 12.5px; }
+  .dossier-foot { padding: 0 18px 20px; display: flex; justify-content: flex-end; }
+  .search-empty { border: 1px dashed var(--line-2); padding: 46px 24px; text-align: center; color: var(--text-dim); display: flex; flex-direction: column; gap: 8px; align-items: center; }
+
+  /* ---------------- moderation ---------------- */
+  .subject-box { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; padding: 14px; border: 1px solid var(--line); background: rgba(216,179,74,0.04); }
+  .subject-box .portrait { width: 70px; height: 70px; flex-basis: 70px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .case-list { display: flex; flex-direction: column; gap: 9px; max-height: 580px; overflow-y: auto; }
+  .case { border: 1px solid var(--line); border-left: 3px solid var(--c); background: rgba(216,179,74,0.03); padding: 10px 13px; display: flex; flex-direction: column; gap: 6px; }
+  .case-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .case-id { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+  .case-time { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .case-reason { font-size: 15.5px; white-space: pre-wrap; word-break: break-word; }
+  .case-meta { display: flex; gap: 16px; flex-wrap: wrap; font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); }
+  .case-meta b { color: var(--text); font-weight: 400; }
+  .case-notes { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); white-space: pre-wrap; word-break: break-word; border-top: 1px dashed var(--line); padding-top: 6px; }
+
+  /* ---------------- staff ---------------- */
+  .role-blurb { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); letter-spacing: 0.04em; }
+  .ack { display: flex; gap: 9px; align-items: flex-start; font-size: 14px; color: #FFC4B2; border: 1px solid var(--red); background: rgba(224,96,60,0.1); padding: 8px 10px; }
+  .cred { margin-top: 16px; border: 1px solid var(--green); background: rgba(91,201,138,0.07); padding: 12px 13px; animation: fade-in .25s ease-out; }
+  .cred-title { font-family: var(--display); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--green); margin-bottom: 5px; }
+  .cred-note { font-size: 13.5px; color: var(--text-dim); margin-bottom: 8px; line-height: 1.4; }
+  .cred-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; flex-wrap: wrap; }
+  .cred-k { width: 70px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; color: var(--gold-dim); text-transform: uppercase; }
+  .cred-v { flex: 1; font-family: var(--mono); font-size: 13px; background: var(--field); border: 1px solid var(--line); padding: 4px 8px; word-break: break-all; }
+  .roster { display: flex; flex-direction: column; gap: 9px; }
+  .member { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 11px 13px; border: 1px solid var(--line); border-left: 3px solid var(--c); background: rgba(216,179,74,0.03); }
+  .member-main { flex: 1 1 170px; min-width: 0; }
+  .member-name { font-weight: 700; font-size: 17px; letter-spacing: 0.05em; display: flex; align-items: center; gap: 9px; word-break: break-all; }
+  .member-sub { font-family: var(--mono); font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .member-meta { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); line-height: 1.55; flex: 0 1 190px; }
+  .you { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: #120d02; background: var(--gold); padding: 0 6px; text-transform: uppercase; }
+
+  .backdrop { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(2,3,6,0.78); backdrop-filter: blur(3px); }
+  .dialog { width: 100%; max-width: 440px; border: 1px solid var(--red); background: #0b0f16; box-shadow: 0 0 40px rgba(224,96,60,0.18); animation: dialog-in .2s ease-out; }
+  .dialog-bar { padding: 9px 14px; font-family: var(--display); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; background: linear-gradient(90deg, #A83A1F, rgba(168,58,31,0.2)); }
+  .dialog-body { padding: 18px; }
+  .dialog-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+  /* ---------------- login ---------------- */
+  .login-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px 18px; }
+  .login-card { width: 100%; max-width: 430px; }
+  .login-card.shake { animation: shake .4s; }
+  .login-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .login-name { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: 0.26em; color: var(--gold-bright); }
+  .login-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--text-faint); text-transform: uppercase; margin-top: 3px; }
+  .login-warn { font-size: 14px; color: var(--text-dim); border-left: 2px solid var(--gold-deep); padding-left: 11px; margin: 0 0 18px; line-height: 1.45; }
+  .login-foot { margin: 18px 0 0; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--text-faint); }
+  .authbar { position: absolute; left: 0; right: 0; top: 0; height: 2px; overflow: hidden; }
+  .authbar::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--gold-bright), transparent); animation: shimmer 1s linear infinite; }
+
+  /* ---------------- access granted overlay ---------------- */
+  .granted {
+    position: fixed; inset: 0; z-index: 8000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; cursor: pointer;
+    background: radial-gradient(ellipse at 50% 45%, rgba(180,144,30,0.2), rgba(5,7,11,0.97) 62%);
+    animation: granted-life 1.9s ease forwards;
+  }
+  .granted-title { margin: 0 -0.38em 0 0; font-family: var(--display); font-weight: 700; font-size: clamp(22px, 5vw, 40px); letter-spacing: 0.38em; color: var(--gold-bright); text-shadow: 0 0 26px rgba(216,179,74,0.65); animation: granted-in .9s cubic-bezier(.2,.7,.2,1) both; text-align: center; }
+  .granted-line { height: 1px; width: min(340px, 72vw); background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: line-grow .9s ease both; }
+  .granted-sub { font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; text-align: center; padding: 0 16px; }
+
+  /* ---------------- responsive ---------------- */
+  @media (max-width: 1000px) {
+    .grid-2, .staff-layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .v-shell { flex-direction: column; }
+    .v-rail { width: auto; flex-basis: auto; border-right: none; border-bottom: 1px solid var(--line); }
+    .v-nav { flex-direction: row; flex-wrap: wrap; }
+    .v-rail-foot { flex-direction: row; align-items: center; justify-content: space-between; margin-top: 0; }
+    .v-content { padding: 16px 14px 28px; }
+    .v-top { padding: 12px 14px; }
+    .dossier-body { flex-direction: column; align-items: center; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .v-banner { letter-spacing: 0.1em; font-size: 10px; }
+    .held { grid-template-columns: minmax(0,1fr) auto; }
+    .held .field.qty, .held .btn { grid-column: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
 
   /* =========================================================
@@ -130,69 +370,33 @@
     transition: opacity 0.8s ease, transform 0.8s ease, visibility 0s linear 0.8s;
   }
   #boot.boot-exit { opacity: 0; transform: scale(1.05); visibility: hidden; pointer-events: none; }
-
-  .boot-bg {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse at 50% 42%, rgba(180,144,30,0.16) 0%, rgba(5,7,11,0) 58%),
-      radial-gradient(ellipse at 50% 120%, rgba(216,179,74,0.10) 0%, rgba(5,7,11,0) 60%),
-      #05070b;
-  }
+  .boot-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 42%, rgba(180,144,30,0.16) 0%, rgba(5,7,11,0) 58%), radial-gradient(ellipse at 50% 120%, rgba(216,179,74,0.10) 0%, rgba(5,7,11,0) 60%), #05070b; }
   .boot-grid {
     position: absolute; left: -60%; right: -60%; bottom: 0; height: 52%;
-    background-image:
-      linear-gradient(rgba(216,179,74,0.26) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(216,179,74,0.26) 1px, transparent 1px);
-    background-size: 60px 60px;
-    transform: perspective(520px) rotateX(64deg);
-    transform-origin: 50% 100%;
-    -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 88%);
-            mask-image: linear-gradient(to top, #000 0%, transparent 88%);
+    background-image: linear-gradient(rgba(216,179,74,0.26) 1px, transparent 1px), linear-gradient(90deg, rgba(216,179,74,0.26) 1px, transparent 1px);
+    background-size: 60px 60px; transform: perspective(520px) rotateX(64deg); transform-origin: 50% 100%;
+    -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 88%); mask-image: linear-gradient(to top, #000 0%, transparent 88%);
     animation: boot-grid-move 2.4s linear infinite;
   }
   @keyframes boot-grid-move { from { background-position: 0 0; } to { background-position: 0 60px; } }
-  .boot-scan {
-    position: absolute; left: 0; right: 0; height: 2px; top: -2%;
-    background: linear-gradient(90deg, transparent, rgba(240,207,106,0.85), transparent);
-    box-shadow: 0 0 22px 4px rgba(216,179,74,0.35);
-    animation: boot-scan 3.8s linear infinite;
-  }
+  .boot-scan { position: absolute; left: 0; right: 0; height: 2px; top: -2%; background: linear-gradient(90deg, transparent, rgba(240,207,106,0.85), transparent); box-shadow: 0 0 22px 4px rgba(216,179,74,0.35); animation: boot-scan 3.8s linear infinite; }
   @keyframes boot-scan { 0% { top: -2%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: 102%; opacity: 0; } }
-  .boot-crt {
-    position: absolute; inset: 0; pointer-events: none;
-    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
-  }
+  .boot-crt { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px); }
   .bc { position: absolute; width: 26px; height: 26px; border: 0 solid rgba(216,179,74,0.7); }
   .bc-tl { top: 22px; left: 22px; border-top-width: 1px; border-left-width: 1px; }
   .bc-tr { top: 22px; right: 22px; border-top-width: 1px; border-right-width: 1px; }
   .bc-bl { bottom: 22px; left: 22px; border-bottom-width: 1px; border-left-width: 1px; }
   .bc-br { bottom: 22px; right: 22px; border-bottom-width: 1px; border-right-width: 1px; }
   .boot-meta { position: absolute; top: 28px; left: 58px; font-size: 11px; letter-spacing: 0.18em; color: rgba(216,196,138,0.55); }
-
   .boot-stage { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 20px; }
   .boot-core { position: relative; width: min(380px, 70vw); aspect-ratio: 1; }
   .boot-core svg { width: 100%; height: 100%; display: block; overflow: visible; }
-  .boot-readout {
-    position: absolute; left: 50%; top: 53%; transform: translate(-50%, -50%);
-    text-align: center; font-family: 'Orbitron', 'Share Tech Mono', monospace; color: #F0CF6A;
-    text-shadow: 0 0 14px rgba(240,207,106,0.55);
-  }
+  .boot-readout { position: absolute; left: 50%; top: 53%; transform: translate(-50%, -50%); text-align: center; font-family: 'Orbitron', 'Share Tech Mono', monospace; color: #F0CF6A; text-shadow: 0 0 14px rgba(240,207,106,0.55); }
   #boot-pct { font-size: clamp(26px, 6vw, 38px); font-weight: 700; letter-spacing: 0.04em; line-height: 1; }
   .boot-unit { font-size: 10px; letter-spacing: 0.4em; margin-top: 6px; color: rgba(216,196,138,0.7); text-shadow: none; }
-
-  .boot-title {
-    margin: 18px -0.46em 0 0; font-family: 'Orbitron', 'Share Tech Mono', monospace; font-weight: 700;
-    font-size: clamp(22px, 4.6vw, 34px); letter-spacing: 0.46em; color: #F3E3AE; text-align: center;
-    text-shadow: 0 0 18px rgba(216,179,74,0.45);
-    animation: boot-title-in 1.5s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    transition: text-shadow 0.4s ease;
-  }
-  @keyframes boot-title-in {
-    from { opacity: 0; letter-spacing: 1.1em; filter: blur(7px); }
-    to   { opacity: 1; letter-spacing: 0.46em; filter: blur(0); }
-  }
+  .boot-title { margin: 18px -0.46em 0 0; font-family: 'Orbitron', 'Share Tech Mono', monospace; font-weight: 700; font-size: clamp(22px, 4.6vw, 34px); letter-spacing: 0.46em; color: #F3E3AE; text-align: center; text-shadow: 0 0 18px rgba(216,179,74,0.45); animation: boot-title-in 1.5s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; transition: text-shadow 0.4s ease; }
+  @keyframes boot-title-in { from { opacity: 0; letter-spacing: 1.1em; filter: blur(7px); } to { opacity: 1; letter-spacing: 0.46em; filter: blur(0); } }
   .boot-sub { margin-top: 8px; font-size: 12px; letter-spacing: 0.34em; color: rgba(216,196,138,0.75); text-align: center; min-height: 1.4em; }
-
   .boot-log { list-style: none; margin: 26px 0 0; padding: 0 0 0 14px; width: min(400px, 86vw); border-left: 1px solid rgba(216,179,74,0.45); }
   .boot-log li { display: flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.9; opacity: 0; transform: translateX(-6px); transition: opacity 0.3s ease, transform 0.3s ease; }
   .boot-log li.on { opacity: 1; transform: none; }
@@ -202,39 +406,30 @@
   .bl-s.pending { animation: blink 1s ease-in-out infinite; }
   .bl-s.ok { color: #F0CF6A; }
   .bl-s.bad { color: #E0603C; }
-
   .boot-skip { position: absolute; bottom: -62px; left: 0; right: 0; text-align: center; font-size: 11px; letter-spacing: 0.22em; color: rgba(216,196,138,0.45); opacity: 0; transition: opacity 0.6s ease; }
   .boot-skip.on { opacity: 1; }
   .boot-fail { margin-top: 22px; text-align: center; color: #E0603C; font-size: 12px; line-height: 1.7; max-width: 420px; }
   .boot-fail[hidden] { display: none; }
   .boot-fail button { margin-top: 10px; background: transparent; border: 1px solid #D8B34A; color: #F0CF6A; padding: 7px 18px; letter-spacing: 0.2em; font-family: inherit; }
-
   #boot.boot-done .boot-title { text-shadow: 0 0 30px rgba(240,207,106,0.95); }
   #boot.boot-done .boot-sub { color: #F0CF6A; }
-
-  @media (prefers-reduced-motion: reduce) {
-    .boot-grid, .boot-scan, .boot-title, .bl-s.pending { animation: none !important; }
-    #boot, .boot-log li { transition-duration: 0.01ms !important; }
-    @keyframes blink { 0%, 100% { opacity: 1; } }
-    .liveDotSmall { animation: none !important; }
-  }
   @media (max-width: 520px) { .boot-meta { display: none; } .boot-skip { bottom: -44px; } }
 </style>
 </head>
 <body>
 
 <noscript>
-  <div style="padding:40px;font-family:sans-serif;text-align:center">The Veyrathis Admin Console needs JavaScript to run.</div>
+  <div style="padding:40px;font-family:sans-serif;text-align:center;color:#EAE3CE">The Veyrathis Operations Console needs JavaScript to run.</div>
 </noscript>
 
 <!-- ================= BOOT SCREEN ================= -->
-<div id="boot" role="status" aria-live="polite" aria-label="Loading Veyrathis Admin Console">
+<div id="boot" role="status" aria-live="polite" aria-label="Loading Veyrathis Operations Console">
   <div class="boot-bg"></div>
   <div class="boot-grid"></div>
   <div class="boot-scan"></div>
   <div class="boot-crt"></div>
   <span class="bc bc-tl"></span><span class="bc bc-tr"></span><span class="bc bc-bl"></span><span class="bc bc-br"></span>
-  <div class="boot-meta">VEY-ADMIN 1.5.0</div>
+  <div class="boot-meta">VEY-OPS 2.0.0</div>
 
   <div class="boot-stage">
     <div class="boot-core">
@@ -272,7 +467,7 @@
     </div>
 
     <h1 class="boot-title">VEYRATHIS</h1>
-    <div class="boot-sub" id="boot-sub">Admin Console</div>
+    <div class="boot-sub" id="boot-sub">Operations Console</div>
 
     <ul class="boot-log" id="boot-log">
       <li><span class="bl-n">Secure channel</span><span class="bl-l"></span><span class="bl-s pending">···</span></li>
@@ -319,7 +514,6 @@
   ringEl.style.strokeDashoffset = CIRC;
   if (reduce && svgEl.pauseAnimations) svgEl.pauseAnimations();
 
-  // tick marks around the outer ring
   var ticks = document.getElementById("boot-ticks");
   var NS = "http://www.w3.org/2000/svg";
   for (var i = 0; i < 90; i++) {
@@ -436,6 +630,7 @@
 const SUPABASE_URL = (window.VEY_CONFIG && window.VEY_CONFIG.SUPABASE_URL) || "https://ngfkmluzrgbphgowrrul.supabase.co";
 const fn = (slug) => `${SUPABASE_URL}/functions/v1/${slug}`;
 
+const BUILD = "2.0.0";
 const FUNCTION_URL = fn("trigger-admin-action");
 const LIST_ACTIONS_URL = fn("list-admin-function");
 const ROBLOX_LOOKUP_URL = fn("roblox-lookup");
@@ -446,6 +641,8 @@ const LIST_ACTIVITY_URL = fn("list-admin-activity");
 const LIST_MOD_URL = fn("list-mod-incidents");
 const STAFF_URL = fn("admin-staff-manage");
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+const REDUCE_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
 // =========================================================
 // API layer — one place for auth headers, error shaping and
@@ -488,37 +685,39 @@ async function api(url, { token, body } = {}) {
 // =========================================================
 const ROLES = {
   owner: {
-    label: "Owner",
+    label: "Owner", clearance: "Level 3", color: "#F0CF6A",
     blurb: "Full access, including staff accounts.",
     tabs: ["actions", "personnel", "moderation", "activity", "staff"],
   },
   database_moderator: {
-    label: "Database Moderator",
+    label: "Database Moderator", clearance: "Level 2", color: "#5AA9E6",
     blurb: "Actions, Personnel, Moderation and Activity Log.",
     tabs: ["actions", "personnel", "moderation", "activity"],
   },
   game_moderator: {
-    label: "Game Moderator",
+    label: "Game Moderator", clearance: "Level 1", color: "#5BC98A",
     blurb: "Moderation records only.",
     tabs: ["moderation"],
   },
 };
 const roleLabel = (role) => (ROLES[role] && ROLES[role].label) || role || "Unknown";
+const roleColor = (role) => (ROLES[role] && ROLES[role].color) || "#B7AE92";
+const clearanceOf = (role) => (ROLES[role] && ROLES[role].clearance) || "No clearance";
 const tabsForRole = (role) => (ROLES[role] && ROLES[role].tabs) || [];
 
 const NAV_ITEMS = [
   { key: "actions", label: "Actions" },
   { key: "personnel", label: "Personnel" },
   { key: "moderation", label: "Moderation" },
-  { key: "activity", label: "Activity Log" },
+  { key: "activity", label: "Activity" },
   { key: "staff", label: "Staff" },
 ];
 const TAB_TITLES = {
-  actions: "Actions Overview",
-  personnel: "Personnel Overview",
-  moderation: "Moderation Records",
-  activity: "Activity Log",
-  staff: "Staff Management",
+  actions: "Actions overview",
+  personnel: "Personnel database",
+  moderation: "Moderation records",
+  activity: "Activity log",
+  staff: "Staff management",
 };
 
 // =========================================================
@@ -549,7 +748,7 @@ const ITEM_DATABASE = {
 };
 
 // =========================================================
-// Live clock
+// Small shared helpers + hooks
 // =========================================================
 function useClock() {
   const [now, setNow] = useState(new Date());
@@ -559,10 +758,20 @@ function useClock() {
   }, []);
   return now;
 }
-function formatClock(d) {
-  const day = d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "2-digit" });
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-  return `${day} ${time}`;
+function useOnline() {
+  const [on, setOn] = useState(typeof navigator === "undefined" ? true : navigator.onLine !== false);
+  useEffect(() => {
+    const up = () => setOn(true), down = () => setOn(false);
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); };
+  }, []);
+  return on;
+}
+const pad2 = (n) => String(n).padStart(2, "0");
+function formatElapsed(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600), m = Math.floor((totalSeconds % 3600) / 60), s = totalSeconds % 60;
+  return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
 }
 function formatDateTime(iso) {
   if (!iso) return "—";
@@ -580,6 +789,37 @@ function relativeTime(iso) {
   return d === 1 ? "1 day ago" : `${d} days ago`;
 }
 
+function Glyph({ size = 28 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" style={{ flex: `0 0 ${size}px` }}>
+      <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="none" stroke="#D8B34A" strokeWidth="1.5" />
+      <polygon points="16,9 22,16 16,23 10,16" fill="#D8B34A" />
+    </svg>
+  );
+}
+
+function Banner() {
+  return <div className="v-banner" aria-hidden="true">Restricted // Veyrathis operations // Authorized personnel only // All access is logged</div>;
+}
+
+function Panel({ title, tag, actions, children, bodyStyle, flush }) {
+  return (
+    <section className="panel">
+      <div className="panel-head">
+        <span className="panel-title">{title}</span>
+        <span className="panel-actions">
+          {tag && <span className="tag">{tag}</span>}
+          {actions}
+        </span>
+      </div>
+      <div className="panel-body" style={flush ? { padding: 0 } : bodyStyle}>{children}</div>
+    </section>
+  );
+}
+function RefreshButton({ onClick, disabled }) {
+  return <button type="button" className="icon-btn" onClick={onClick} disabled={disabled} title="Refresh" aria-label="Refresh">⟳</button>;
+}
+
 // =========================================================
 // Error boundary — a render crash shows a recovery screen, not a blank page
 // =========================================================
@@ -590,15 +830,19 @@ class ErrorBoundary extends React.Component {
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <div style={s.loginWrap}>
-        <div style={s.loginPanel}>
-          <div style={s.loginBar}><span style={s.loginBarLeft}>Veyrathis Admin — Error</span></div>
-          <div style={s.loginBody}>
-            <div style={s.errorBox}>⚠ Something went wrong while drawing this page.</div>
-            <p style={{ ...s.loginPrompt, marginTop: 14 }}>Your session is still valid. Reload to continue.</p>
-            <button type="button" style={s.primaryButton} onClick={() => window.location.reload()}>Reload console</button>
+      <div className="v-app">
+        <Banner />
+        <div className="login-wrap">
+          <div className="panel login-card">
+            <div className="panel-head"><span className="panel-title">System fault</span></div>
+            <div className="panel-body col">
+              <div className="note err" role="alert">The interface hit an unexpected error while drawing this page.</div>
+              <p style={{ margin: 0, color: "var(--text-dim)" }}>Your session is still valid. Reload to continue.</p>
+              <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>Reload console</button>
+            </div>
           </div>
         </div>
+        <Banner />
       </div>
     );
   }
@@ -614,6 +858,7 @@ function Login({ onLoginSuccess, notice }) {
   const [capsOn, setCapsOn] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -624,56 +869,64 @@ function Login({ onLoginSuccess, notice }) {
       if (!json.token || !json.admin) throw new ApiError("Unexpected response from the login service.", 500);
       onLoginSuccess(json.token, json.admin);
     } catch (err) {
-      setError(err.status === 0 ? "Network error reaching the login function. Try again." : (err.message || "Wrong username or password."));
+      setError({
+        denied: err.status === 400 || err.status === 401 || err.status === 403,
+        text: err.status === 0 ? "Network error reaching the login function. Try again." : (err.message || "Wrong username or password."),
+      });
+      setShakeKey(k => k + 1);
       setLoading(false);
     }
   }
 
   return (
-    <div style={s.loginWrap}>
-      <div style={s.loginPanel}>
-        <div style={s.loginBar}>
-          <span style={s.loginBarLeft}>
-            <span style={s.loginBarLabel}>Veyrathis Admin — Log On</span>
-          </span>
-          <span style={s.winBtnRow}>
-            <span style={s.winBtn}>_</span>
-            <span style={s.winBtn}>□</span>
-            <span style={{ ...s.winBtn, ...s.winBtnClose }}>×</span>
-          </span>
-        </div>
-        <div style={s.loginBody}>
-          <div style={s.brandRow}>
-            <span style={s.brandGlyph}>◆</span>
-            <span style={s.brandName}>Veyrathis</span>
-            <span style={s.brandVersion}>Admin Console v1.5.0</span>
+    <div className="v-app">
+      <Banner />
+      <div className="login-wrap">
+        <div className={"panel login-card" + (shakeKey ? " shake" : "")} key={shakeKey}>
+          {loading && <div className="authbar" />}
+          <div className="panel-head">
+            <span className="panel-title">Secure access terminal</span>
+            <span className="tag">VEY-OPS {BUILD}</span>
           </div>
-          <div style={s.loginPrompt}>Sign in with your operator account to continue.</div>
-          {notice && <div style={{ ...s.noteBox, marginBottom: 14 }} role="status">{notice}</div>}
-          <form onSubmit={handleSubmit} style={s.form}>
-            <label style={s.label}>
-              User name
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={s.input}
-                placeholder="operator id" autoComplete="username" disabled={loading} spellCheck={false} autoCapitalize="none" />
-            </label>
-            <label style={s.label}>
-              Password
-              <div style={{ display: "flex", gap: 6 }}>
-                <input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
-                  style={{ ...s.input, flex: 1 }} placeholder="••••••••" autoComplete="current-password" disabled={loading}
-                  onKeyUp={e => setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))} />
-                <button type="button" style={s.secondaryButton} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>
-                  {showPw ? "Hide" : "Show"}
-                </button>
+          <div className="panel-body">
+            <div className="login-brand">
+              <Glyph size={44} />
+              <div>
+                <div className="login-name">Veyrathis</div>
+                <div className="login-sub">Operations console</div>
               </div>
-              {capsOn && <span style={{ fontWeight: 400, color: "var(--xp-gold)" }}>Caps Lock is on.</span>}
-            </label>
-            {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
-            <button type="submit" disabled={loading} style={s.primaryButton}>{loading ? "Signing in…" : "Sign In"}</button>
-          </form>
-          <p style={s.footnote}>Accounts are provisioned by the project owner.</p>
+            </div>
+            <p className="login-warn">Restricted system. Authorized operators only. Every sign-in and action is logged and attributed to your account.</p>
+            {notice && <div className="note warn" role="status" style={{ marginBottom: 14 }}>{notice}</div>}
+            <form onSubmit={handleSubmit} className="col">
+              <label className="lbl-wrap">
+                <span className="lbl">Operator ID</span>
+                <input className="field" type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus
+                  placeholder="operator id" autoComplete="username" disabled={loading} spellCheck={false} autoCapitalize="none" />
+              </label>
+              <label className="lbl-wrap">
+                <span className="lbl">Passphrase</span>
+                <div className="row">
+                  <input className="field grow" type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
+                    placeholder="••••••••" autoComplete="current-password" disabled={loading}
+                    onKeyUp={e => setCapsOn(!!(e.getModifierState && e.getModifierState("CapsLock")))} />
+                  <button type="button" className="btn btn-sm" onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>{showPw ? "Hide" : "Show"}</button>
+                </div>
+                {capsOn && <span style={{ color: "var(--gold-bright)", fontSize: 13 }}>Caps Lock is on.</span>}
+              </label>
+              {error && (
+                <div className="note err" role="alert">
+                  {error.denied && <b style={{ letterSpacing: "0.14em", textTransform: "uppercase", marginRight: 8 }}>Access denied.</b>}
+                  {error.text}
+                </div>
+              )}
+              <button type="submit" disabled={loading} className="btn btn-primary">{loading ? "Authenticating…" : "Authenticate"}</button>
+            </form>
+            <p className="login-foot">Accounts are issued by the project owner.</p>
+          </div>
         </div>
       </div>
+      <Banner />
     </div>
   );
 }
@@ -767,32 +1020,32 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
   }
 
   return (
-    <form onSubmit={handleSubmit} style={s.form}>
-      <fieldset style={s.fieldset}>
-        <legend style={s.legend}>Target player</legend>
-        <div style={s.row}>
-          <input type="text" placeholder="Roblox username" value={robloxUsername} onChange={e => setRobloxUsername(e.target.value)} style={{ ...s.input, flex: 1 }} />
-          <button type="button" onClick={resolveUsername} disabled={lookingUp || !robloxUsername.trim()} style={s.secondaryButton}>
+    <form onSubmit={handleSubmit} className="col">
+      <fieldset className="fs">
+        <legend>Target player</legend>
+        <div className="row">
+          <input className="field grow" type="text" placeholder="Roblox username" value={robloxUsername} onChange={e => setRobloxUsername(e.target.value)} />
+          <button type="button" className="btn btn-sm" onClick={resolveUsername} disabled={lookingUp || !robloxUsername.trim()}>
             {lookingUp ? "…" : "Resolve"}
           </button>
         </div>
-        <input type="text" inputMode="numeric" placeholder="Roblox UserId (numeric)" value={robloxUserId}
-          onChange={e => setRobloxUserId(e.target.value.replace(/[^0-9]/g, ""))} required style={s.input} />
+        <input className="field" type="text" inputMode="numeric" placeholder="Roblox UserId (numeric)" value={robloxUserId}
+          onChange={e => setRobloxUserId(e.target.value.replace(/[^0-9]/g, ""))} required />
       </fieldset>
 
-      <fieldset style={s.fieldset}>
-        <legend style={s.legend}>Action</legend>
-        <select value={actionType} onChange={e => setActionType(e.target.value)} style={s.input}>
+      <fieldset className="fs">
+        <legend>Action</legend>
+        <select className="field" value={actionType} onChange={e => setActionType(e.target.value)} aria-label="Action type">
           {ACTION_TYPES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
         </select>
-        <input type="number" placeholder={selectedAction.field === "delta" ? "Amount (use − for subtract)" : "New value"}
-          value={amount} onChange={e => setAmount(e.target.value)} required style={s.input} />
-        <input type="text" placeholder="Reason (optional, shown in audit log)" value={reason} onChange={e => setReason(e.target.value)} style={s.input} />
+        <input className="field" type="number" placeholder={selectedAction.field === "delta" ? "Amount (use − for subtract)" : "New value"}
+          value={amount} onChange={e => setAmount(e.target.value)} required />
+        <input className="field" type="text" placeholder="Reason (optional, shown in audit log)" value={reason} onChange={e => setReason(e.target.value)} />
       </fieldset>
 
-      {result && <div style={result.ok ? s.resultOk : s.resultError} role="status">{result.ok ? "✓" : "⚠"} {result.message}</div>}
+      {result && <div className={"note " + (result.ok ? "ok" : "err")} role="status">{result.message}</div>}
 
-      <button type="submit" disabled={submitting} style={s.primaryButton}>
+      <button type="submit" disabled={submitting} className="btn btn-primary">
         {submitting ? "Sending…" : selectedAction.verb}
       </button>
     </form>
@@ -803,10 +1056,10 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
 // Action History
 // =========================================================
 const STATUS_STYLES = {
-  pending: { color: "var(--xp-gold)", label: "PENDING" },
-  broadcast: { color: "var(--xp-gold)", label: "SENT" },
-  applied: { color: "var(--xp-green)", label: "APPLIED" },
-  failed: { color: "var(--xp-red)", label: "FAILED" },
+  pending: { color: "var(--gold)", label: "PENDING" },
+  broadcast: { color: "var(--gold)", label: "SENT" },
+  applied: { color: "var(--green)", label: "APPLIED" },
+  failed: { color: "var(--red)", label: "FAILED" },
 };
 const ACTION_LABELS = {
   set_credits: "set_credits",
@@ -816,6 +1069,7 @@ const ACTION_LABELS = {
   add_item: "add_item",
   remove_item: "remove_item",
 };
+const ACTIONS_COLS = "78px 86px minmax(0,1fr) 110px 90px";
 
 function ActionHistory({ refreshSignal, token }) {
   const [rows, setRows] = useState([]);
@@ -845,45 +1099,40 @@ function ActionHistory({ refreshSignal, token }) {
   }
 
   return (
-    <div style={s.panelBox}>
-      <div style={s.panelBar}>
-        <span style={s.panelBarLeft}>
-          <span style={s.panelBarPath}>Admin Actions Log</span>
-        </span>
-        <span style={s.winBtnRow}>
-          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
-        </span>
-      </div>
-      <div style={s.panelBody}>
-        {error && <div style={s.errorBox}>⚠ Couldn't load history: {error}</div>}
-        {!error && rows.length === 0 && !loading && <div style={s.empty}>No actions logged yet. Submit one and it appears here.</div>}
-
-        <div style={s.listHeaderRow}>
-          <span style={{ flexBasis: 66, flexShrink: 0 }}>Time</span>
-          <span style={{ flexBasis: 62, flexShrink: 0 }}>Status</span>
-          <span style={{ flex: 1 }}>Player</span>
-          <span style={{ flexBasis: 90, flexShrink: 0 }}>Action</span>
-          <span style={{ flexBasis: 70, flexShrink: 0, textAlign: "right" }}>Amount</span>
+    <Panel title="Admin actions log" tag="Live" actions={<RefreshButton onClick={load} disabled={loading} />}>
+      {error && <div className="note err" style={{ marginBottom: 12 }}>Couldn't load history: {error}</div>}
+      {!error && rows.length === 0 && !loading && <div className="empty">No actions logged yet. Submit one and it appears here.</div>}
+      {rows.length > 0 && (
+        <div className="log-scroll">
+          <div className="log">
+            <div className="log-row log-head" style={{ "--cols": ACTIONS_COLS }}>
+              <span>Time</span><span>Status</span><span>Player</span><span>Action</span><span className="ta-r">Amount</span>
+            </div>
+            <div className="log-feed">
+              {rows.map(row => {
+                const status = STATUS_STYLES[row.status] || STATUS_STYLES.pending;
+                const time = new Date(row.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+                return (
+                  <div key={row.id} className="log-row" style={{ "--cols": ACTIONS_COLS }}>
+                    <span className="c-faint">{time}</span>
+                    <span style={{ color: status.color }}>{status.label}</span>
+                    <span className="ellipsis">{row.roblox_username || `uid:${row.roblox_user_id}`}</span>
+                    <span className="c-dim ellipsis">{ACTION_LABELS[row.action_type] || row.action_type}</span>
+                    <span className="c-gold ta-r ellipsis">{formatAmount(row)}</span>
+                    {(row.delivery_method || row.reason) && (
+                      <span className="log-sub">
+                        {row.delivery_method && <span className="tag">{row.delivery_method}</span>}
+                        {row.reason && <span>Note: {row.reason}</span>}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div style={s.logFeed}>
-          {rows.map((row, i) => {
-            const status = STATUS_STYLES[row.status] || STATUS_STYLES.pending;
-            const time = new Date(row.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-            return (
-              <div key={row.id} style={{ ...s.logLine, background: i % 2 === 0 ? "var(--xp-window-light)" : "transparent" }}>
-                <span style={s.logTime}>{time}</span>
-                <span style={{ ...s.logStatus, color: status.color }}>{status.label}</span>
-                <span style={s.logPlayer}>{row.roblox_username || `uid:${row.roblox_user_id}`}</span>
-                <span style={s.logAction}>{ACTION_LABELS[row.action_type] || row.action_type}</span>
-                <span style={s.logAmount}>{formatAmount(row)}</span>
-                {row.delivery_method && <span style={s.logDelivery}>{row.delivery_method}</span>}
-                {row.reason && <span style={s.logReason}>Note: {row.reason}</span>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      )}
+    </Panel>
   );
 }
 
@@ -906,6 +1155,7 @@ const ACTIVITY_EVENT_LABELS = {
   staff_create: "Created staff account",
   staff_delete: "Deleted staff account",
 };
+const ACTIVITY_COLS = "130px 120px minmax(0,1fr) 150px";
 
 function ActivityLog({ token }) {
   const [rows, setRows] = useState([]);
@@ -936,61 +1186,55 @@ function ActivityLog({ token }) {
     (eventFilter === "all" || r.event_type === eventFilter));
 
   return (
-    <div style={s.panelBox}>
-      <div style={s.panelBar}>
-        <span style={s.panelBarLeft}>
-          <span style={s.panelBarPath}>Activity Log</span>
-        </span>
-        <span style={s.winBtnRow}>
-          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
-        </span>
+    <Panel title="Activity log" tag="Audit" actions={<RefreshButton onClick={load} disabled={loading} />}>
+      <div className="row wrap" style={{ marginBottom: 14 }}>
+        <label className="lbl" htmlFor="act-admin">Admin</label>
+        <select id="act-admin" className="field sm" value={adminFilter} onChange={e => setAdminFilter(e.target.value)} style={{ width: 180 }}>
+          <option value="all">All admins</option>
+          {admins.map(name => <option key={name} value={name}>{name}</option>)}
+        </select>
+        <label className="lbl" htmlFor="act-event" style={{ marginLeft: 8 }}>Event</label>
+        <select id="act-event" className="field sm" value={eventFilter} onChange={e => setEventFilter(e.target.value)} style={{ width: 210 }}>
+          <option value="all">All events</option>
+          {events.map(ev => <option key={ev} value={ev}>{ACTIVITY_EVENT_LABELS[ev] || ev}</option>)}
+        </select>
       </div>
-      <div style={s.panelBody}>
-        <div style={{ ...s.row, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="act-admin">Admin</label>
-          <select id="act-admin" value={adminFilter} onChange={e => setAdminFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 170px" }}>
-            <option value="all">All admins</option>
-            {admins.map(name => <option key={name} value={name}>{name}</option>)}
-          </select>
-          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="act-event">Event</label>
-          <select id="act-event" value={eventFilter} onChange={e => setEventFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 190px" }}>
-            <option value="all">All events</option>
-            {events.map(ev => <option key={ev} value={ev}>{ACTIVITY_EVENT_LABELS[ev] || ev}</option>)}
-          </select>
-        </div>
 
-        {error && <div style={s.errorBox}>⚠ {error}</div>}
-        {!error && filteredRows.length === 0 && !loading && (
-          <div style={s.empty}>No activity matches. Actions taken in this console appear here.</div>
-        )}
+      {error && <div className="note err">{error}</div>}
+      {!error && filteredRows.length === 0 && !loading && <div className="empty">No activity matches. Actions taken in this console appear here.</div>}
 
-        <div style={s.listHeaderRow}>
-          <span style={{ flex: "0 0 124px" }}>Time</span>
-          <span style={{ flex: "0 0 110px" }}>Admin</span>
-          <span style={{ flex: 1 }}>Event</span>
-          <span style={{ flexBasis: 140, flexShrink: 0 }}>Target</span>
+      {filteredRows.length > 0 && (
+        <div className="log-scroll">
+          <div className="log">
+            <div className="log-row log-head" style={{ "--cols": ACTIVITY_COLS }}>
+              <span>Time</span><span>Admin</span><span>Event</span><span>Target</span>
+            </div>
+            <div className="log-feed">
+              {filteredRows.map(row => {
+                const time = new Date(row.created_at).toLocaleString(undefined, {
+                  month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+                });
+                return (
+                  <div key={row.id} className="log-row" style={{ "--cols": ACTIVITY_COLS }}>
+                    <span className="c-faint">{time}</span>
+                    <span className="ellipsis">{row.admin_username || "unknown"}</span>
+                    <span className="c-dim">{ACTIVITY_EVENT_LABELS[row.event_type] || row.event_type}</span>
+                    <span className="c-gold ellipsis">{row.target || "—"}</span>
+                    {row.detail && <span className="log-sub">{row.detail}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div style={s.logFeed}>
-          {filteredRows.map((row, i) => {
-            const time = new Date(row.created_at).toLocaleString(undefined, {
-              month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
-            });
-            return (
-              <div key={row.id} style={{ ...s.logLine, background: i % 2 === 0 ? "var(--xp-window-light)" : "transparent" }}>
-                <span style={{ ...s.logTime, flex: "0 0 124px" }}>{time}</span>
-                <span style={{ ...s.logPlayer, flex: "0 0 110px" }}>{row.admin_username || "unknown"}</span>
-                <span style={{ ...s.logAction, flex: 1, flexBasis: "auto" }}>{ACTIVITY_EVENT_LABELS[row.event_type] || row.event_type}</span>
-                <span style={s.logDelivery}>{row.target || "—"}</span>
-                {row.detail && <span style={s.logReason}>{row.detail}</span>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      )}
+    </Panel>
   );
 }
 
+// =========================================================
+// Personnel
+// =========================================================
 function avatarHeadshotUrl(userId) {
   return `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
 }
@@ -1041,19 +1285,15 @@ function groupItemCounts(items) {
 
 function HeldItemRow({ name, count, category, onRemove, busy }) {
   const [qty, setQty] = useState(1);
-
-  function clampQty(v) {
-    const n = Math.floor(Number(v) || 1);
-    return Math.max(1, Math.min(count, n));
-  }
+  const clampQty = (v) => Math.max(1, Math.min(count, Math.floor(Number(v) || 1)));
 
   return (
-    <div style={pd.heldRow}>
-      <span style={pd.heldName}>{name}</span>
-      <span style={pd.heldCount}>×{count}</span>
-      <input type="number" min={1} max={count} value={qty} onChange={e => setQty(clampQty(e.target.value))}
-        style={pd.heldQtyInput} disabled={busy} aria-label={`Quantity of ${name} to remove`} />
-      <button type="button" onClick={() => onRemove(name, category, qty)} disabled={busy} style={pd.heldRemoveBtn}>
+    <div className="held">
+      <span className="held-name">{name}</span>
+      <span className="held-count">×{count}</span>
+      <input className="field sm qty" type="number" min={1} max={count} value={qty} onChange={e => setQty(clampQty(e.target.value))}
+        disabled={busy} aria-label={`Quantity of ${name} to remove`} />
+      <button type="button" className="btn btn-danger btn-sm" onClick={() => onRemove(name, category, qty)} disabled={busy}>
         {busy ? "…" : "Remove"}
       </button>
     </div>
@@ -1070,18 +1310,18 @@ function AddItemRow({ category, onAdd, busy }) {
   }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (itemsInCategory.length === 0) {
-    return <div style={pd.invEmpty}>No catalogued items in this category.</div>;
+    return <div className="empty" style={{ padding: "8px 0", textAlign: "left" }}>No catalogued items in this category.</div>;
   }
 
   return (
-    <div style={pd.addRow}>
-      <select value={itemName} onChange={e => setItemName(e.target.value)} style={pd.addSelect} disabled={busy} aria-label={`${category} item to grant`}>
+    <div className="add-row">
+      <select className="field sm" value={itemName} onChange={e => setItemName(e.target.value)} disabled={busy} aria-label={`${category} item to grant`}>
         {itemsInCategory.map(name => <option key={name} value={name}>{name}</option>)}
       </select>
-      <input type="number" min={1} max={100} value={qty}
+      <input className="field sm qty" type="number" min={1} max={100} value={qty}
         onChange={e => setQty(Math.max(1, Math.min(100, Math.floor(Number(e.target.value) || 1))))}
-        style={pd.heldQtyInput} disabled={busy} aria-label="Quantity to grant" />
-      <button type="button" onClick={() => onAdd(itemName, category, qty)} disabled={busy || !itemName} style={pd.addBtn}>
+        disabled={busy} aria-label="Quantity to grant" />
+      <button type="button" className="btn btn-sm" onClick={() => onAdd(itemName, category, qty)} disabled={busy || !itemName}>
         {busy ? "…" : "Grant"}
       </button>
     </div>
@@ -1094,26 +1334,24 @@ function InventoryCategory({ label, category, items, onAdd, onRemove, busyKey })
   const totalCount = grouped.reduce((sum, g) => sum + g.count, 0);
 
   return (
-    <div style={pd.invCategory}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={pd.invCategoryHeader} aria-expanded={open}>
-        <span style={{ ...pd.invChevron, transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>▸</span>
-        <span style={pd.invCategoryLabel}>{label}</span>
-        <span style={pd.invCategoryCount}>{totalCount}</span>
+    <div className="cat">
+      <button type="button" className="cat-head" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        <span className="chev" style={{ transform: open ? "rotate(90deg)" : "none" }}>▸</span>
+        <span>{label}</span>
+        <span className="cat-count">{totalCount}</span>
       </button>
       {open && (
-        <div style={pd.invCategoryBody}>
+        <div className="cat-body">
           {grouped.length > 0 ? (
-            <div style={pd.heldList}>
-              {grouped.map(g => (
-                <HeldItemRow key={g.name} name={g.name} count={g.count} category={category}
-                  onRemove={onRemove} busy={busyKey === `remove:${g.name}`} />
-              ))}
-            </div>
+            grouped.map(g => (
+              <HeldItemRow key={g.name} name={g.name} count={g.count} category={category}
+                onRemove={onRemove} busy={busyKey === `remove:${g.name}`} />
+            ))
           ) : (
-            <div style={pd.invEmpty}>Empty</div>
+            <div className="empty" style={{ padding: "6px 0", textAlign: "left" }}>Empty</div>
           )}
-          <div style={pd.addRowWrap}>
-            <span style={pd.addRowLabel}>Grant new item</span>
+          <div className="add-wrap">
+            <span className="lbl">Grant new item</span>
             <AddItemRow category={category} onAdd={onAdd} busy={busyKey === `add:${category}`} />
           </div>
         </div>
@@ -1196,21 +1434,21 @@ function PersonnelDatabase({ token, onEditPlayer }) {
     submitInventoryAction("remove_item", itemName, category, quantity, `remove:${itemName}`);
 
   return (
-    <div style={pd.wrap}>
-      <form onSubmit={handleLookup} style={pd.searchRow}>
-        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search by Roblox UserId or username" style={{ ...s.input, flex: 1 }} />
-        <button type="submit" disabled={lookingUp || !query.trim()} style={s.primaryButton}>
+    <div className="col" style={{ gap: 18 }}>
+      <form onSubmit={handleLookup} className="row">
+        <input className="field grow" type="text" value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Search by Roblox UserId or username" aria-label="Search player" />
+        <button type="submit" disabled={lookingUp || !query.trim()} className="btn btn-primary">
           {lookingUp ? "Searching…" : "Search"}
         </button>
       </form>
 
-      {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
+      {error && <div className="note err" role="alert">{error}</div>}
 
       {!profile && !error && !lookingUp && (
-        <div style={pd.emptyState}>
+        <div className="search-empty">
           <div>Enter a Roblox UserId or username to pull a personnel record.</div>
-          <div style={pd.emptyStateSub}>Records read live from ProfileStore — works for offline players too.</div>
+          <div className="c-faint" style={{ fontFamily: "var(--mono)", fontSize: 12 }}>Records read live from ProfileStore — works for offline players too.</div>
         </div>
       )}
 
@@ -1232,37 +1470,29 @@ function PersonnelDatabase({ token, onEditPlayer }) {
 function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, invBusyKey, invError }) {
   const found = profile.profile_found;
   const displayName = username || `UserId ${profile.roblox_user_id}`;
-  const clearance = found ? "Record on file" : "No record";
 
   return (
-    <div style={pd.dossier}>
-      <div style={pd.dossierBar}>
-        <span style={pd.dossierBarLeft}>
-          <span style={pd.dossierBarPath}>{displayName} — Personnel Record</span>
-        </span>
-        <span style={{ ...pd.liveDot, ...(found ? {} : { background: "var(--xp-red)" }) }}></span>
-      </div>
-
-      <div style={pd.dossierBody} className="vey-dossier-body">
-        <div style={pd.portraitCol}>
-          <div style={pd.portraitFrame}>
-            <img src={avatarHeadshotUrl(profile.roblox_user_id)} alt={displayName} style={pd.portraitImg}
-              onError={(e) => { e.target.style.opacity = 0.15; }} />
+    <Panel title={`Subject file — ${displayName}`} tag={found ? "On file" : "No record"} flush
+      actions={<span className="led pulse" style={{ "--c": found ? "var(--green)" : "var(--red)" }} />}>
+      <div className="dossier-body">
+        <div>
+          <div className="portrait">
+            <img src={avatarHeadshotUrl(profile.roblox_user_id)} alt={displayName} onError={(e) => { e.target.style.opacity = 0.15; }} />
           </div>
-          <div style={{ ...pd.clearanceTag, ...(found ? {} : { color: "var(--xp-red)", borderColor: "var(--xp-red)" }) }}>{clearance}</div>
+          <div className={"stamp" + (found ? "" : " bad")}>{found ? "Record on file" : "No record"}</div>
         </div>
 
-        <div style={pd.identityCol}>
-          <div style={pd.nameRow}>
-            <span style={pd.name}>{displayName}</span>
+        <div className="grow col" style={{ gap: 4 }}>
+          <div className="row wrap" style={{ justifyContent: "space-between" }}>
+            <span className="subject-name">{displayName}</span>
             {found && profile.credits !== null && (
-              <span style={pd.creditsBadge}>{Number(profile.credits).toLocaleString()} credits</span>
+              <span className="credit-chip">{Number(profile.credits).toLocaleString()} credits</span>
             )}
           </div>
-          <div style={pd.userIdLine}>UserId {profile.roblox_user_id}</div>
+          <div className="subject-id">UserId {profile.roblox_user_id}</div>
 
           {!found && (
-            <div style={pd.notFoundBox}>
+            <div className="note err" style={{ marginTop: 10 }}>
               No game data found for this player. This can mean the account has
               never joined Veyrathis, or the UserId was entered incorrectly.
             </div>
@@ -1270,36 +1500,34 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
 
           {found && (
             <React.Fragment>
-              <div style={pd.hairline}></div>
-              <div style={pd.statGrid} className="vey-stat-grid">
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>First joined</div>
-                  <div style={pd.statValue}>{formatJoinDate(profile.first_joined)}</div>
-                  {profile.first_joined && <div style={pd.statSub}>{daysAgo(profile.first_joined)}</div>}
+              <div className="hair"></div>
+              <div className="stat-grid">
+                <div>
+                  <div className="stat-k">First joined</div>
+                  <div className="stat-v">{formatJoinDate(profile.first_joined)}</div>
+                  {profile.first_joined && <div className="stat-s">{daysAgo(profile.first_joined)}</div>}
                 </div>
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>Playtime</div>
-                  <div style={pd.statValue}>{formatDuration(profile.total_time_seconds)}</div>
+                <div>
+                  <div className="stat-k">Playtime</div>
+                  <div className="stat-v">{formatDuration(profile.total_time_seconds)}</div>
                 </div>
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>XP / Total XP</div>
-                  <div style={pd.statValue}>{profile.xp ?? "—"} / {profile.total_xp ?? "—"}</div>
+                <div>
+                  <div className="stat-k">XP / Total XP</div>
+                  <div className="stat-v">{profile.xp ?? "—"} / {profile.total_xp ?? "—"}</div>
                 </div>
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>Skill points</div>
-                  <div style={pd.statValue}>{profile.skill_points ?? "—"}</div>
+                <div>
+                  <div className="stat-k">Skill points</div>
+                  <div className="stat-v">{profile.skill_points ?? "—"}</div>
                 </div>
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>Bank</div>
-                  <div style={pd.statValue}>
-                    {profile.bank !== null && profile.bank !== undefined
-                      ? Number(profile.bank).toLocaleString() + " credits"
-                      : "—"}
+                <div>
+                  <div className="stat-k">Bank</div>
+                  <div className="stat-v">
+                    {profile.bank !== null && profile.bank !== undefined ? Number(profile.bank).toLocaleString() + " credits" : "—"}
                   </div>
                 </div>
-                <div style={pd.statCell}>
-                  <div style={pd.statLabel}>Stock portfolio</div>
-                  <div style={pd.statValue}>
+                <div>
+                  <div className="stat-k">Stock portfolio</div>
+                  <div className="stat-v">
                     {profile.stock_portfolio
                       ? (Array.isArray(profile.stock_portfolio) ? `${profile.stock_portfolio.length} holdings` : "on file")
                       : "—"}
@@ -1313,9 +1541,9 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
 
       {found && (
         <React.Fragment>
-          <div style={pd.sectionDivider}>Inventory</div>
-          {invError && <div style={{ ...s.errorBox, margin: "0 18px 10px" }} role="alert">⚠ {invError}</div>}
-          <div style={pd.inventoryWrap}>
+          <div className="section-bar">Inventory</div>
+          {invError && <div className="note err" role="alert" style={{ margin: "12px 18px 0" }}>{invError}</div>}
+          <div className="inv-wrap">
             {INVENTORY_CATEGORIES.map(cat => (
               <InventoryCategory key={cat.key} label={cat.label} category={cat.key}
                 items={profile.inventory ? profile.inventory[cat.key] : []}
@@ -1323,10 +1551,10 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
             ))}
           </div>
 
-          <div style={pd.sectionDivider}>Admin actions log</div>
-          <div style={pd.historyWrap}>
+          <div className="section-bar">Admin actions on file</div>
+          <div className="hist" style={{ marginTop: 14 }}>
             {(!profile.admin_actions || profile.admin_actions.length === 0) && (
-              <div style={pd.invEmpty}>No prior admin actions on file for this player.</div>
+              <div className="empty" style={{ padding: "14px 0" }}>No prior admin actions on file for this player.</div>
             )}
             {profile.admin_actions && profile.admin_actions.map(row => {
               const status = STATUS_STYLES[row.status] || STATUS_STYLES.pending;
@@ -1335,23 +1563,23 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
                 : (p.delta !== undefined ? `${p.delta > 0 ? "+" : ""}${p.delta}`
                 : (p.itemName !== undefined ? p.itemName : "—"));
               return (
-                <div key={row.id} style={pd.historyRow}>
-                  <span style={{ ...pd.historyDot, background: status.color }}></span>
-                  <span style={pd.historyAction}>{ACTION_LABELS[row.action_type] || row.action_type}</span>
-                  <span style={pd.historyAmount}>{amount}</span>
-                  <span style={pd.historyTime}>{new Date(row.created_at).toLocaleString()}</span>
-                  {row.reason && <span style={pd.historyReason}>Note: {row.reason}</span>}
+                <div key={row.id} className="hist-row">
+                  <span className="led" style={{ "--c": status.color }}></span>
+                  <span>{ACTION_LABELS[row.action_type] || row.action_type}</span>
+                  <span className="c-gold">{amount}</span>
+                  <span className="c-faint" style={{ marginLeft: "auto" }}>{new Date(row.created_at).toLocaleString()}</span>
+                  {row.reason && <span className="log-sub" style={{ flexBasis: "100%" }}>Note: {row.reason}</span>}
                 </div>
               );
             })}
           </div>
 
-          <div style={pd.dossierFooter}>
-            <button type="button" onClick={onEdit} style={s.primaryButton}>Edit Credits / XP</button>
+          <div className="dossier-foot">
+            <button type="button" onClick={onEdit} className="btn btn-primary">Edit credits / XP</button>
           </div>
         </React.Fragment>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -1359,12 +1587,12 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
 // Moderation — warns / strikes / kicks / bans from mod_incidents.
 // Available to every console role.
 // =========================================================
-const MOD_TYPE_STYLES = {
-  WARN:   { color: "#8A6412", bg: "#FBF1CF" },
-  STRIKE: { color: "#A8520A", bg: "#FBE5CF" },
-  KICK:   { color: "#2C5F8A", bg: "#E1EDF7" },
-  BAN:    { color: "#A02A1E", bg: "#FBEAE4" },
-  UNBAN:  { color: "#2E7D2E", bg: "#E6F2E6" },
+const MOD_TYPE_COLORS = {
+  WARN: "#E3B84A",
+  STRIKE: "#F0883E",
+  KICK: "#5AA9E6",
+  BAN: "#E0603C",
+  UNBAN: "#5BC98A",
 };
 const MOD_TYPES = ["WARN", "STRIKE", "KICK", "BAN", "UNBAN"];
 
@@ -1446,115 +1674,98 @@ function ModerationPanel({ token }) {
   }
 
   const shown = typeFilter === "ALL" ? incidents : incidents.filter(r => r.type === typeFilter);
-  const displayName = subject
-    ? (subject.name || incidents[0]?.target_name || `UserId ${subject.userId}`)
-    : null;
+  const displayName = subject ? (subject.name || incidents[0]?.target_name || `UserId ${subject.userId}`) : null;
 
   function banBadge() {
     if (!summary) return null;
     const st = summary.ban_status;
-    if (st === "permanent") return { text: "BANNED — permanent", color: "var(--xp-red)" };
-    if (st === "active") return { text: `BANNED — until ${new Date(summary.ban_expires_at).toLocaleString()}`, color: "var(--xp-red)" };
-    if (st === "expired") return { text: "Last ban expired", color: "var(--xp-text-faint)" };
-    if (st === "lifted") return { text: "Ban lifted", color: "var(--xp-green)" };
-    return { text: "No bans on record", color: "var(--xp-text-faint)" };
+    if (st === "permanent") return { text: "BANNED — permanent", color: "var(--red)" };
+    if (st === "active") return { text: `BANNED — until ${new Date(summary.ban_expires_at).toLocaleString()}`, color: "var(--red)" };
+    if (st === "expired") return { text: "Last ban expired", color: "var(--text-faint)" };
+    if (st === "lifted") return { text: "Ban lifted", color: "var(--green)" };
+    return { text: "No bans on record", color: "var(--text-faint)" };
   }
   const badge = banBadge();
 
   return (
-    <div style={md.wrap}>
-      <form onSubmit={handleSearch} style={md.searchRow}>
-        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search by Roblox UserId or username" style={{ ...s.input, flex: 1 }} />
-        <button type="submit" disabled={loading || !query.trim()} style={s.primaryButton}>
+    <div className="col" style={{ gap: 18 }}>
+      <form onSubmit={handleSearch} className="row">
+        <input className="field grow" type="text" value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Search by Roblox UserId or username" aria-label="Search player" />
+        <button type="submit" disabled={loading || !query.trim()} className="btn btn-primary">
           {loading ? "Searching…" : "Search"}
         </button>
-        {subject && <button type="button" onClick={loadFeed} style={s.secondaryButton}>Recent</button>}
+        {subject && <button type="button" onClick={loadFeed} className="btn">Recent</button>}
       </form>
 
-      {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
+      {error && <div className="note err" role="alert">{error}</div>}
 
       {subject && summary && (
-        <div style={md.summaryBox}>
-          <img src={avatarHeadshotUrl(subject.userId)} alt={displayName} style={md.portrait}
-            onError={(e) => { e.target.style.opacity = 0.15; }} />
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={pd.name}>{displayName}</div>
-            <div style={pd.userIdLine}>UserId {subject.userId}</div>
-            <div style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: badge.color }}>{badge.text}</div>
-            <div style={{ marginTop: 2, fontSize: 11.5, color: "var(--xp-text-dim)" }}>
-              Current strikes: <b>{summary.current_strikes}</b>
+        <div className="subject-box">
+          <div className="portrait">
+            <img src={avatarHeadshotUrl(subject.userId)} alt={displayName} onError={(e) => { e.target.style.opacity = 0.15; }} />
+          </div>
+          <div className="grow" style={{ minWidth: 200 }}>
+            <div className="subject-name" style={{ fontSize: 18 }}>{displayName}</div>
+            <div className="subject-id">UserId {subject.userId}</div>
+            <div style={{ marginTop: 7, fontWeight: 700, letterSpacing: "0.06em", color: badge.color }}>{badge.text}</div>
+            <div className="c-dim" style={{ fontFamily: "var(--mono)", fontSize: 12 }}>
+              Current strikes: <b className="c-gold" style={{ fontWeight: 400 }}>{summary.current_strikes}</b>
             </div>
           </div>
-          <div style={md.chipRow}>
+          <div className="chips">
             {MOD_TYPES.map(t => (
-              <span key={t} style={{ ...md.chip, color: MOD_TYPE_STYLES[t].color, background: MOD_TYPE_STYLES[t].bg, borderColor: MOD_TYPE_STYLES[t].color }}>
-                {t} · {summary.counts[t] || 0}
-              </span>
+              <span key={t} className="badge" style={{ "--c": MOD_TYPE_COLORS[t] }}>{t} · {summary.counts[t] || 0}</span>
             ))}
           </div>
         </div>
       )}
 
-      <div style={s.panelBox}>
-        <div style={s.panelBar}>
-          <span style={s.panelBarLeft}>
-            <span>{subject ? `Records — ${displayName}` : "Recent moderation activity"}</span>
-          </span>
-          <span style={s.winBtnRow}>
-            <button onClick={() => (subject ? openPlayer(subject.userId, subject.name) : loadFeed())}
-              style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
-          </span>
+      <Panel title={subject ? `Records — ${displayName}` : "Recent moderation activity"} tag={`${shown.length} shown`}
+        actions={<RefreshButton onClick={() => (subject ? openPlayer(subject.userId, subject.name) : loadFeed())} disabled={loading} />}>
+        <div className="row" style={{ marginBottom: 14 }}>
+          <label className="lbl" htmlFor="mod-type">Type</label>
+          <select id="mod-type" className="field sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} style={{ width: 160 }}>
+            <option value="ALL">All types</option>
+            {MOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
         </div>
-        <div style={s.panelBody}>
-          <div style={{ ...s.row, marginBottom: 12, alignItems: "center" }}>
-            <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="mod-type">Type</label>
-            <select id="mod-type" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
-              style={{ ...s.input, width: "auto", flex: "0 0 160px" }}>
-              <option value="ALL">All types</option>
-              {MOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
 
-          {!error && !loading && shown.length === 0 && (
-            <div style={s.empty}>
-              {subject ? "No moderation records on file for this player." : "No moderation activity logged yet."}
-            </div>
-          )}
+        {!error && !loading && shown.length === 0 && (
+          <div className="empty">{subject ? "No moderation records on file for this player." : "No moderation activity logged yet."}</div>
+        )}
 
-          <div style={md.list}>
-            {shown.map(r => {
-              const st = MOD_TYPE_STYLES[r.type] || { color: "var(--xp-text-dim)", bg: "var(--xp-window-light)" };
-              const dur = formatModDuration(r.duration_seconds);
-              return (
-                <div key={r.incident_id} style={md.card}>
-                  <div style={md.cardTop}>
-                    <span style={{ ...md.badge, color: st.color, background: st.bg, borderColor: st.color }}>{r.type}</span>
-                    <span style={md.incId}>{r.incident_id}</span>
-                    <span style={md.time}>{new Date(r.created_at).toLocaleString()}</span>
-                  </div>
-                  {!subject && (
-                    <div style={md.target}>
-                      <b>{r.target_name || `uid:${r.target_user_id}`}</b>
-                      <span style={md.dim}> ({r.target_user_id})</span>
-                      <button type="button" style={md.linkBtn}
-                        onClick={() => openPlayer(r.target_user_id, r.target_name)}>View record</button>
-                    </div>
-                  )}
-                  <div style={md.reason}>{r.reason || "No reason provided"}</div>
-                  <div style={md.meta}>
-                    <span>Moderator: <b>{r.moderator_name || "unknown"}</b>{r.moderator_id ? ` (${r.moderator_id})` : ""}</span>
-                    {dur && <span>Duration: <b>{dur}</b></span>}
-                    {r.expires_at && <span>Expires: <b>{new Date(r.expires_at).toLocaleString()}</b></span>}
-                    {r.strikes != null && <span>Strike total: <b>{r.strikes}</b></span>}
-                  </div>
-                  {r.notes && <div style={md.notes}>Private notes: {r.notes}</div>}
+        <div className="case-list">
+          {shown.map(r => {
+            const color = MOD_TYPE_COLORS[r.type] || "#B7AE92";
+            const dur = formatModDuration(r.duration_seconds);
+            return (
+              <div key={r.incident_id} className="case" style={{ "--c": color }}>
+                <div className="case-top">
+                  <span className="badge" style={{ "--c": color }}>{r.type}</span>
+                  <span className="case-id">{r.incident_id}</span>
+                  <span className="case-time">{new Date(r.created_at).toLocaleString()}</span>
                 </div>
-              );
-            })}
-          </div>
+                {!subject && (
+                  <div className="row wrap" style={{ gap: 4 }}>
+                    <b>{r.target_name || `uid:${r.target_user_id}`}</b>
+                    <span className="c-faint" style={{ fontFamily: "var(--mono)", fontSize: 12 }}>({r.target_user_id})</span>
+                    <button type="button" className="btn-link" onClick={() => openPlayer(r.target_user_id, r.target_name)}>View record</button>
+                  </div>
+                )}
+                <div className="case-reason">{r.reason || "No reason provided"}</div>
+                <div className="case-meta">
+                  <span>Moderator: <b>{r.moderator_name || "unknown"}</b>{r.moderator_id ? ` (${r.moderator_id})` : ""}</span>
+                  {dur && <span>Duration: <b>{dur}</b></span>}
+                  {r.expires_at && <span>Expires: <b>{new Date(r.expires_at).toLocaleString()}</b></span>}
+                  {r.strikes != null && <span>Strike total: <b>{r.strikes}</b></span>}
+                </div>
+                {r.notes && <div className="case-notes">Private notes: {r.notes}</div>}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </Panel>
     </div>
   );
 }
@@ -1568,11 +1779,6 @@ const STAFF_ROLE_OPTIONS = [
   { value: "database_moderator", label: "Database Moderator" },
   { value: "owner", label: "Owner" },
 ];
-const ROLE_BADGE = {
-  owner: { color: "#8A6412", bg: "#FBF1CF" },
-  database_moderator: { color: "#2C5F8A", bg: "#E1EDF7" },
-  game_moderator: { color: "#2E7D2E", bg: "#E6F2E6" },
-};
 const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
 
 // Unbiased random password from an unambiguous alphabet (no 0/O, 1/l/I).
@@ -1604,21 +1810,21 @@ function ConfirmDialog({ title, children, confirmWord, confirmLabel, busy, error
   const ready = typed === confirmWord;
 
   return (
-    <div style={st.backdrop} onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
-      <div style={st.dialog} role="dialog" aria-modal="true" aria-labelledby="dlg-title">
-        <div style={st.dialogBar}><span id="dlg-title">{title}</span></div>
-        <div style={st.dialogBody}>
+    <div className="backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
+      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+        <div className="dialog-bar"><span id="dlg-title">{title}</span></div>
+        <div className="dialog-body">
           {children}
-          <label style={{ ...s.label, marginTop: 14 }}>
-            Type <b style={{ color: "var(--xp-red)" }}>{confirmWord}</b> to confirm
-            <input ref={inputRef} type="text" value={typed} onChange={e => setTyped(e.target.value)} style={s.input}
+          <label className="lbl-wrap" style={{ marginTop: 16 }}>
+            <span className="lbl">Type <b style={{ color: "#FFB4A0" }}>{confirmWord}</b> to confirm</span>
+            <input ref={inputRef} className="field" type="text" value={typed} onChange={e => setTyped(e.target.value)}
               autoComplete="off" spellCheck={false} disabled={busy}
               onKeyDown={e => { if (e.key === "Enter" && ready && !busy) { e.preventDefault(); onConfirm(); } }} />
           </label>
-          {error && <div style={{ ...s.errorBox, marginTop: 12 }} role="alert">⚠ {error}</div>}
-          <div style={st.dialogFooter}>
-            <button type="button" style={s.secondaryButton} onClick={onCancel} disabled={busy}>Cancel</button>
-            <button type="button" style={{ ...s.primaryButtonDanger, opacity: ready ? 1 : 0.5 }} onClick={onConfirm} disabled={!ready || busy}>
+          {error && <div className="note err" role="alert" style={{ marginTop: 12 }}>{error}</div>}
+          <div className="dialog-foot">
+            <button type="button" className="btn" onClick={onCancel} disabled={busy}>Cancel</button>
+            <button type="button" className="btn btn-danger solid" onClick={onConfirm} disabled={!ready || busy}>
               {busy ? "Deleting…" : confirmLabel}
             </button>
           </div>
@@ -1745,123 +1951,101 @@ function StaffManagement({ token }) {
   const roleInfo = ROLES[form.role];
 
   return (
-    <div style={st.layout} className="vey-grid">
-      {/* ---------- create account ---------- */}
-      <div style={s.panelBox}>
-        <div style={s.panelBar}>
-          <span style={s.panelBarLeft}><span>Create account</span></span>
-          <span style={s.panelBarTag}>Owner</span>
-        </div>
-        <div style={s.panelBody}>
-          <form onSubmit={handleCreate} style={s.form} autoComplete="off">
-            <fieldset style={s.fieldset}>
-              <legend style={s.legend}>Credentials</legend>
-              <input type="text" placeholder="Username" value={form.username} onChange={e => setField("username", e.target.value)}
-                required style={s.input} autoComplete="off" spellCheck={false} autoCapitalize="none" disabled={creating} aria-label="Username" />
-              <div style={s.row}>
-                <input type={showPw ? "text" : "password"} placeholder="Password (10+ characters)" value={form.password}
-                  onChange={e => setField("password", e.target.value)} required style={{ ...s.input, flex: 1 }}
-                  autoComplete="new-password" disabled={creating} aria-label="Password" />
-                <button type="button" style={s.secondaryButton} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>{showPw ? "Hide" : "Show"}</button>
-              </div>
-              <button type="button" style={{ ...s.secondaryButton, height: 30 }} disabled={creating}
-                onClick={() => { setField("password", generatePassword(16)); setShowPw(true); }}>
-                Generate strong password
-              </button>
-            </fieldset>
-
-            <fieldset style={s.fieldset}>
-              <legend style={s.legend}>Role</legend>
-              <select value={form.role} onChange={e => setField("role", e.target.value)} style={s.input} disabled={creating} aria-label="Role">
-                {STAFF_ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <div style={st.roleBlurb}>{roleInfo ? roleInfo.blurb : ""}</div>
-              {form.role === "owner" && (
-                <label style={st.ackRow}>
-                  <input type="checkbox" checked={ownerAck} onChange={e => setOwnerAck(e.target.checked)} disabled={creating} />
-                  <span>This account gets full access, including creating and deleting staff.</span>
-                </label>
-              )}
-            </fieldset>
-
-            {formError && <div style={s.resultError} role="alert">⚠ {formError}</div>}
-
-            <button type="submit" disabled={creating} style={s.primaryButton}>
-              {creating ? "Creating…" : "Create account"}
-            </button>
-          </form>
-
-          {created && (
-            <div style={st.credCard} role="status">
-              <div style={st.credTitle}>✓ Account created</div>
-              <div style={st.credNote}>The password is shown here once. Send it to {created.username} through a private channel.</div>
-              <div style={st.credRow}><span style={st.credLabel}>Username</span><code style={st.credValue}>{created.username}</code>
-                <button type="button" style={st.credCopy} onClick={() => copyText(created.username, "u")}>{copied === "u" ? "Copied" : "Copy"}</button></div>
-              <div style={st.credRow}><span style={st.credLabel}>Password</span><code style={st.credValue}>{created.password}</code>
-                <button type="button" style={st.credCopy} onClick={() => copyText(created.password, "p")}>{copied === "p" ? "Copied" : "Copy"}</button></div>
-              <div style={st.credRow}><span style={st.credLabel}>Role</span><span style={st.credValue}>{roleLabel(created.role)}</span></div>
-              {copied === "error" && <div style={{ ...st.credNote, color: "var(--xp-red)" }}>Couldn't access the clipboard. Select the text and copy it manually.</div>}
-              <button type="button" style={{ ...s.secondaryButton, marginTop: 10, height: 28 }} onClick={() => setCreated(null)}>Dismiss</button>
+    <div className="staff-layout">
+      <Panel title="Issue account" tag="Owner only">
+        <form onSubmit={handleCreate} className="col" autoComplete="off">
+          <fieldset className="fs">
+            <legend>Credentials</legend>
+            <input className="field" type="text" placeholder="Username" value={form.username} onChange={e => setField("username", e.target.value)}
+              required autoComplete="off" spellCheck={false} autoCapitalize="none" disabled={creating} aria-label="Username" />
+            <div className="row">
+              <input className="field grow" type={showPw ? "text" : "password"} placeholder="Password (10+ characters)" value={form.password}
+                onChange={e => setField("password", e.target.value)} required autoComplete="new-password" disabled={creating} aria-label="Password" />
+              <button type="button" className="btn btn-sm" onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>{showPw ? "Hide" : "Show"}</button>
             </div>
-          )}
-        </div>
-      </div>
+            <button type="button" className="btn btn-sm" disabled={creating}
+              onClick={() => { setField("password", generatePassword(16)); setShowPw(true); }}>
+              Generate strong password
+            </button>
+          </fieldset>
 
-      {/* ---------- accounts list ---------- */}
-      <div style={s.panelBox}>
-        <div style={s.panelBar}>
-          <span style={s.panelBarLeft}><span>Accounts</span></span>
-          <span style={s.winBtnRow}>
-            <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
-          </span>
-        </div>
-        <div style={s.panelBody}>
-          <div style={st.chipRow}>
-            {STAFF_ROLE_OPTIONS.slice().reverse().map(o => (
-              <span key={o.value} style={{ ...md.chip, color: ROLE_BADGE[o.value].color, background: ROLE_BADGE[o.value].bg, borderColor: ROLE_BADGE[o.value].color }}>
-                {o.label} · {counts[o.value]}
-              </span>
-            ))}
+          <fieldset className="fs">
+            <legend>Clearance</legend>
+            <select className="field" value={form.role} onChange={e => setField("role", e.target.value)} disabled={creating} aria-label="Role">
+              {STAFF_ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <div className="role-blurb">{roleInfo ? `${roleInfo.clearance} — ${roleInfo.blurb}` : ""}</div>
+            {form.role === "owner" && (
+              <label className="ack">
+                <input type="checkbox" checked={ownerAck} onChange={e => setOwnerAck(e.target.checked)} disabled={creating} />
+                <span>This account gets full access, including creating and deleting staff.</span>
+              </label>
+            )}
+          </fieldset>
+
+          {formError && <div className="note err" role="alert">{formError}</div>}
+
+          <button type="submit" disabled={creating} className="btn btn-primary">
+            {creating ? "Issuing…" : "Create account"}
+          </button>
+        </form>
+
+        {created && (
+          <div className="cred" role="status">
+            <div className="cred-title">Account issued</div>
+            <div className="cred-note">The password is shown here once. Send it to {created.username} through a private channel.</div>
+            <div className="cred-row"><span className="cred-k">Username</span><code className="cred-v">{created.username}</code>
+              <button type="button" className="btn btn-sm" onClick={() => copyText(created.username, "u")}>{copied === "u" ? "Copied" : "Copy"}</button></div>
+            <div className="cred-row"><span className="cred-k">Password</span><code className="cred-v">{created.password}</code>
+              <button type="button" className="btn btn-sm" onClick={() => copyText(created.password, "p")}>{copied === "p" ? "Copied" : "Copy"}</button></div>
+            <div className="cred-row"><span className="cred-k">Role</span><span style={{ color: roleColor(created.role), fontWeight: 700 }}>{roleLabel(created.role)}</span></div>
+            {copied === "error" && <div className="cred-note" style={{ color: "#FFB4A0" }}>Couldn't access the clipboard. Select the text and copy it manually.</div>}
+            <button type="button" className="btn btn-sm" style={{ marginTop: 10 }} onClick={() => setCreated(null)}>Dismiss</button>
           </div>
+        )}
+      </Panel>
 
-          {flash && <div style={{ ...s.resultOk, marginBottom: 12 }} role="status">✓ {flash}</div>}
-          {loadError && <div style={s.errorBox} role="alert">⚠ {loadError}</div>}
-          {!loadError && !loading && staff.length === 0 && <div style={s.empty}>No accounts found.</div>}
+      <Panel title="Access roster" tag={`${staff.length} accounts`} actions={<RefreshButton onClick={load} disabled={loading} />}>
+        <div className="chips" style={{ marginBottom: 14 }}>
+          {STAFF_ROLE_OPTIONS.slice().reverse().map(o => (
+            <span key={o.value} className="badge" style={{ "--c": roleColor(o.value) }}>{o.label} · {counts[o.value]}</span>
+          ))}
+        </div>
 
-          <div style={st.list}>
-            {staff.map(m => {
-              const badge = ROLE_BADGE[m.role] || { color: "var(--xp-text-dim)", bg: "var(--xp-window-light)" };
-              return (
-                <div key={m.id} style={st.item}>
-                  <div style={st.itemMain}>
-                    <div style={st.itemName}>
-                      {m.username}
-                      {m.is_you && <span style={st.youTag}>You</span>}
-                    </div>
-                    <div style={st.itemSub}>
-                      Created {formatDateTime(m.created_at)}
-                    </div>
-                  </div>
-                  <span style={{ ...md.badge, color: badge.color, background: badge.bg, borderColor: badge.color, whiteSpace: "nowrap" }}>{roleLabel(m.role)}</span>
-                  <div style={st.itemMeta}>
-                    <div>Last sign-in: <b>{relativeTime(m.last_login)}</b></div>
-                    <div>{m.active_sessions > 0 ? <span style={{ color: "var(--xp-green)" }}>● {m.active_sessions} active session{m.active_sessions === 1 ? "" : "s"}</span> : "No active sessions"}</div>
-                  </div>
-                  <button type="button" style={{ ...s.primaryButtonDanger, padding: "5px 12px", fontSize: 11 }}
-                    disabled={m.is_you} title={m.is_you ? "You can't delete your own account" : `Delete ${m.username}`}
-                    onClick={() => { setDeleteError(null); setDeleteTarget(m); }}>
-                    Delete
-                  </button>
+        {flash && <div className="note ok" role="status" style={{ marginBottom: 12 }}>{flash}</div>}
+        {loadError && <div className="note err" role="alert">{loadError}</div>}
+        {!loadError && !loading && staff.length === 0 && <div className="empty">No accounts found.</div>}
+
+        <div className="roster">
+          {staff.map(m => (
+            <div key={m.id} className="member" style={{ "--c": roleColor(m.role) }}>
+              <div className="member-main">
+                <div className="member-name">
+                  {m.username}
+                  {m.is_you && <span className="you">You</span>}
                 </div>
-              );
-            })}
-          </div>
+                <div className="member-sub">Created {formatDateTime(m.created_at)}</div>
+              </div>
+              <span className="badge" style={{ "--c": roleColor(m.role) }}>{roleLabel(m.role)}</span>
+              <div className="member-meta">
+                <div>Last sign-in: <span className="c-gold">{relativeTime(m.last_login)}</span></div>
+                <div>{m.active_sessions > 0
+                  ? <span style={{ color: "var(--green)" }}>● {m.active_sessions} active session{m.active_sessions === 1 ? "" : "s"}</span>
+                  : "No active sessions"}</div>
+              </div>
+              <button type="button" className="btn btn-danger btn-sm" disabled={m.is_you}
+                title={m.is_you ? "You can't delete your own account" : `Delete ${m.username}`}
+                onClick={() => { setDeleteError(null); setDeleteTarget(m); }}>
+                Delete
+              </button>
+            </div>
+          ))}
         </div>
-      </div>
+      </Panel>
 
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete staff account"
+          title="Revoke and delete account"
           confirmWord={deleteTarget.username}
           confirmLabel="Delete account"
           busy={deleting}
@@ -1869,7 +2053,7 @@ function StaffManagement({ token }) {
           onCancel={() => { if (!deleting) setDeleteTarget(null); }}
           onConfirm={confirmDelete}
         >
-          <p style={{ margin: 0, lineHeight: 1.55 }}>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>
             This permanently deletes <b>{deleteTarget.username}</b> ({roleLabel(deleteTarget.role)}) and signs out any open sessions.
             Their past activity stays in the Activity Log.
           </p>
@@ -1879,96 +2063,77 @@ function StaffManagement({ token }) {
   );
 }
 
-const st = {
-  layout: { display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 16, padding: "16px 20px 30px", maxWidth: 1180, alignItems: "start" },
-  roleBlurb: { fontSize: 11, color: "var(--xp-text-faint)", padding: "0 2px" },
-  ackRow: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11.5, color: "var(--xp-red)", background: "var(--xp-red-dim)", border: "1px solid #E3A79E", borderRadius: 2, padding: "7px 9px" },
-
-  credCard: { marginTop: 16, border: "1px solid #9FCB9F", background: "var(--xp-green-dim)", borderRadius: 3, padding: "11px 12px", animation: "fade-in 0.2s ease-out" },
-  credTitle: { fontWeight: 700, color: "#1F5F1F", marginBottom: 4 },
-  credNote: { fontSize: 11, color: "var(--xp-text-dim)", marginBottom: 8, lineHeight: 1.5 },
-  credRow: { display: "flex", alignItems: "center", gap: 8, padding: "4px 0", flexWrap: "wrap" },
-  credLabel: { width: 62, fontSize: 10.5, fontWeight: 700, color: "var(--xp-text-dim)" },
-  credValue: { flex: 1, fontFamily: "Consolas, 'Courier New', monospace", fontSize: 12, background: "var(--xp-field)", border: "1px solid var(--xp-bevel-shadow)", padding: "3px 7px", wordBreak: "break-all" },
-  credCopy: { background: "linear-gradient(180deg, #FCFCFC 0%, #ECE9D8 100%)", border: "1px solid var(--xp-bevel-dark)", borderRadius: 3, padding: "3px 10px", fontSize: 11 },
-
-  chipRow: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 },
-  list: { display: "flex", flexDirection: "column", gap: 8 },
-  item: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 11px", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)" },
-  itemMain: { flex: "1 1 160px", minWidth: 0 },
-  itemName: { fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 8, wordBreak: "break-all" },
-  itemSub: { fontSize: 10.5, color: "var(--xp-text-faint)", marginTop: 2 },
-  youTag: { fontSize: 9.5, fontWeight: 700, color: "#4A3300", background: "linear-gradient(180deg, #FFF3C4, #FFE28A)", border: "1px solid #E8A100", borderRadius: 2, padding: "0 6px" },
-  itemMeta: { fontSize: 10.5, color: "var(--xp-text-dim)", lineHeight: 1.5, flex: "0 1 170px" },
-
-  backdrop: { position: "fixed", inset: 0, background: "rgba(20,16,6,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 500 },
-  dialog: { width: "100%", maxWidth: 420, background: "var(--xp-window)", border: "1px solid #5C4508", boxShadow: "3px 3px 0 rgba(0,0,0,0.3)", animation: "dialog-in 0.18s ease-out" },
-  dialogBar: {
-    padding: "5px 10px", color: "#fff", fontWeight: 700, fontSize: 12.5, fontFamily: "var(--sans-display)",
-    background: "linear-gradient(180deg, #C23A28 0%, #A02A1E 12%, #A02A1E 45%, #7E1E14 100%)",
-  },
-  dialogBody: { padding: 18 },
-  dialogFooter: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 },
-};
-
 // =========================================================
-// Sidebar nav
+// Rail, top bar
 // =========================================================
 function Sidebar({ tabs, activeTab, setActiveTab, adminInfo, onSignOut }) {
+  const initials = (adminInfo.username || "?").slice(0, 2).toUpperCase();
   return (
-    <aside style={s.sidebar} className="vey-sidebar">
-      <div style={s.sidebarBrand}>
-        <span style={s.brandGlyph}>◆</span>
+    <aside className="v-rail">
+      <div className="v-brand">
+        <Glyph size={30} />
         <div>
-          <div style={s.brandName}>Veyrathis</div>
-          <div style={s.brandVersion}>Admin Console v1.5.0</div>
+          <div className="v-brand-name">VEYRATHIS</div>
+          <div className="v-brand-sub">OPS {BUILD}</div>
         </div>
       </div>
 
-      <div style={s.sidebarStatusLine}>
-        <span style={s.liveDotSmall} className="liveDotSmall"></span>
-        <span>{adminInfo.username} — connected</span>
+      <div className="v-operator">
+        <div className="v-avatar">{initials}</div>
+        <div style={{ minWidth: 0 }}>
+          <div className="v-op-name">{adminInfo.username}</div>
+          <div className="v-op-meta" style={{ color: roleColor(adminInfo.role) }}>{roleLabel(adminInfo.role)}</div>
+          <div className="v-op-meta">{clearanceOf(adminInfo.role)}</div>
+        </div>
       </div>
 
-      <div style={s.navGroupLabel}>Console</div>
-      <nav style={s.navList} className="vey-nav" aria-label="Console sections">
-        {NAV_ITEMS.filter(item => tabs.includes(item.key)).map(item => (
-          <button key={item.key} onClick={() => setActiveTab(item.key)}
-            style={activeTab === item.key ? s.navItemActive : s.navItem}
-            aria-current={activeTab === item.key ? "page" : undefined}>
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <div>
+        <div className="v-nav-label" style={{ marginBottom: 8 }}>Sections</div>
+        <nav className="v-nav" aria-label="Console sections">
+          {NAV_ITEMS.filter(item => tabs.includes(item.key)).map(item => (
+            <button key={item.key} type="button" onClick={() => setActiveTab(item.key)}
+              className={"v-nav-item" + (activeTab === item.key ? " active" : "")}
+              aria-current={activeTab === item.key ? "page" : undefined}>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-      <div style={s.sidebarFooter} className="vey-sidebar-footer">
-        <div style={s.whoami}>{adminInfo.username} · {roleLabel(adminInfo.role)}</div>
-        <button onClick={() => onSignOut()} style={s.secondaryButton}>Sign Out</button>
+      <div className="v-rail-foot">
+        <div className="v-rail-note">Session bound to this browser tab. Closing it ends your access.</div>
+        <button type="button" className="btn btn-sm" onClick={() => onSignOut()}>Sign out</button>
       </div>
     </aside>
   );
 }
 
-// =========================================================
-// Top vitals strip
-// =========================================================
-function TopStrip({ pendingCount, lastSync, activeTab, showPending }) {
+function TopBar({ activeTab, showPending, pendingCount, lastSync, loginAt }) {
   const now = useClock();
+  const online = useOnline();
+  const elapsed = loginAt ? Math.max(0, Math.floor((now.getTime() - loginAt) / 1000)) : null;
+  const sections = { actions: "Actions", personnel: "Personnel", moderation: "Moderation", activity: "Activity", staff: "Staff" };
   return (
-    <div style={s.topStrip} className="vey-top-strip">
-      <div style={s.topStripLeft}>
-        <span style={s.topStripCmd}>{TAB_TITLES[activeTab] || "Dashboard"}</span>
+    <header className="v-top">
+      <div>
+        <div className="v-crumb">VEY <span>/</span> OPS <span>/</span> <b>{(sections[activeTab] || "Console").toUpperCase()}</b></div>
+        <h1 className="v-title">{TAB_TITLES[activeTab] || "Console"}</h1>
       </div>
-      <div style={s.topStripRight} className="vey-top-right">
+      <div className="v-vitals">
+        <span className="v-vital">
+          <span className="led pulse" style={{ "--c": online ? "var(--green)" : "var(--red)" }} />
+          <span className="v-vital-v">{online ? "Link secure" : "Link lost"}</span>
+        </span>
         {showPending && (
           <React.Fragment>
-            <span style={s.vital}><span style={s.vitalLabel}>Pending</span><span style={{ ...s.vitalValue, color: pendingCount > 0 ? "var(--xp-gold)" : "var(--xp-text-faint)" }}>{pendingCount}</span></span>
-            <span style={s.vital}><span style={s.vitalLabel}>Last sync</span><span style={s.vitalValue}>{lastSync}</span></span>
+            <span className="v-vital"><span className="v-vital-k">PENDING</span><span className="v-vital-v" style={{ color: pendingCount > 0 ? "var(--gold-bright)" : "var(--text-faint)" }}>{pendingCount}</span></span>
+            <span className="v-vital"><span className="v-vital-k">SYNC</span><span className="v-vital-v">{lastSync}</span></span>
           </React.Fragment>
         )}
-        <span style={s.vital}><span style={s.vitalValue}>{formatClock(now)}</span></span>
+        {elapsed !== null && <span className="v-vital"><span className="v-vital-k">SESSION</span><span className="v-vital-v">{formatElapsed(elapsed)}</span></span>}
+        <span className="v-vital"><span className="v-vital-k">UTC</span><span className="v-vital-v">{now.toISOString().slice(11, 19)}</span></span>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -1984,7 +2149,9 @@ function App() {
   const [adminInfo, setAdminInfo] = useState(() => {
     try { const raw = readStored("admin_info"); return raw ? JSON.parse(raw) : null; } catch (_e) { return null; }
   });
+  const [loginAt, setLoginAt] = useState(() => Number(readStored("admin_login_at")) || null);
   const [notice, setNotice] = useState(null);
+  const [granted, setGranted] = useState(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [requestedTab, setRequestedTab] = useState(null);
   const [prefill, setPrefill] = useState({ userId: "", username: "" });
@@ -1999,23 +2166,30 @@ function App() {
   const canSeeActions = allowedTabs.includes("actions");
 
   const handleLoginSuccess = useCallback((newToken, admin) => {
+    const at = Date.now();
     try {
       sessionStorage.setItem("admin_token", newToken);
       sessionStorage.setItem("admin_info", JSON.stringify(admin));
+      sessionStorage.setItem("admin_login_at", String(at));
     } catch (_e) { /* storage unavailable — session lasts until reload */ }
     setNotice(null);
     setRequestedTab(null);
+    setLoginAt(at);
     setToken(newToken);
     setAdminInfo(admin);
+    setGranted({ username: admin.username, role: admin.role });
   }, []);
 
   const handleSignOut = useCallback((message) => {
     try {
       sessionStorage.removeItem("admin_token");
       sessionStorage.removeItem("admin_info");
+      sessionStorage.removeItem("admin_login_at");
     } catch (_e) { /* ignore */ }
     setToken(null);
     setAdminInfo(null);
+    setLoginAt(null);
+    setGranted(null);
     setRequestedTab(null);
     setPrefill({ userId: "", username: "" });
     setPendingCount(0);
@@ -2027,6 +2201,13 @@ function App() {
     unauthorizedHandler = () => handleSignOut("Your session expired. Sign in again to continue.");
     return () => { unauthorizedHandler = null; };
   }, [handleSignOut]);
+
+  // "Access granted" splash after a successful sign-in.
+  useEffect(() => {
+    if (!granted) return;
+    const id = setTimeout(() => setGranted(null), REDUCE_MOTION ? 500 : 1900);
+    return () => clearTimeout(id);
+  }, [granted]);
 
   const handleEditFromProfile = useCallback(({ userId, username }) => {
     setPrefill({ userId, username });
@@ -2045,469 +2226,70 @@ function App() {
           setPendingCount(json.actions.filter(r => r.status === "pending" || r.status === "broadcast").length);
         }
         setLastSync(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
-      } catch (_err) { /* silent — top strip is non-critical */ }
+      } catch (_err) { /* silent — top bar is non-critical */ }
     }
     poll();
     const id = setInterval(poll, 15000);
     return () => { cancelled = true; clearInterval(id); };
   }, [token, refreshSignal, canSeeActions]);
 
+  const grantedOverlay = granted && (
+    <div className="granted" role="status" onClick={() => setGranted(null)}>
+      <Glyph size={46} />
+      <h2 className="granted-title">ACCESS GRANTED</h2>
+      <div className="granted-line"></div>
+      <div className="granted-sub">{granted.username} — {roleLabel(granted.role)} — {clearanceOf(granted.role)}</div>
+    </div>
+  );
+
   if (!token || !adminInfo) return <Login onLoginSuccess={handleLoginSuccess} notice={notice} />;
 
   return (
-    <div style={s.desktopWrap} className="vey-desktop">
-      <div style={s.shell} className="vey-shell">
+    <div className="v-app">
+      <Banner />
+      <div className="v-shell">
         <Sidebar tabs={allowedTabs} activeTab={activeTab} setActiveTab={setRequestedTab} adminInfo={adminInfo} onSignOut={handleSignOut} />
 
-        <div style={s.mainCol}>
-          <div style={s.appTitleBar}>
-            <span style={s.appTitleBarLeft}>
-              <span style={s.appTitleBarIcon}>◆</span>
-              <span>Veyrathis Admin Console</span>
-            </span>
-            <span style={s.winBtnRow}>
-              <span style={s.winBtn}>_</span>
-              <span style={s.winBtn}>□</span>
-              <span style={{ ...s.winBtn, ...s.winBtnClose }}>×</span>
-            </span>
-          </div>
-          <TopStrip pendingCount={pendingCount} lastSync={lastSync} activeTab={activeTab} showPending={canSeeActions} />
+        <div className="v-main">
+          <TopBar activeTab={activeTab} showPending={canSeeActions} pendingCount={pendingCount} lastSync={lastSync} loginAt={loginAt} />
 
-          {!activeTab && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 640 }} className="vey-grid">
-              <div style={s.panelBox}>
-                <div style={s.panelBar}><span style={s.panelBarLeft}><span>No access</span></span></div>
-                <div style={s.panelBody}>
-                  <div style={s.errorBox}>⚠ Your account role ({roleLabel(adminInfo.role)}) isn't assigned to any console section.</div>
-                  <p style={{ ...s.loginPrompt, marginTop: 12 }}>Ask an owner to update your role, then sign in again.</p>
-                </div>
+          <main className="v-content">
+            {!activeTab && (
+              <div className="grid-1" style={{ maxWidth: 640 }}>
+                <Panel title="No clearance">
+                  <div className="note err">Your account role ({roleLabel(adminInfo.role)}) isn't assigned to any console section.</div>
+                  <p style={{ color: "var(--text-dim)", marginBottom: 0 }}>Ask an owner to update your role, then sign in again.</p>
+                </Panel>
               </div>
-            </main>
-          )}
+            )}
 
-          {activeTab === "actions" && (
-            <main style={s.contentGrid} className="vey-grid">
-              <div style={s.panelBox}>
-                <div style={s.panelBar}>
-                  <span style={s.panelBarLeft}>
-                    <span style={s.panelBarPath}>Set Credits / XP</span>
-                  </span>
-                  <span style={s.panelBarTag}>Form</span>
-                </div>
-                <div style={s.panelBody}>
+            {activeTab === "actions" && (
+              <div className="grid-2">
+                <Panel title="Set credits / XP" tag="Form">
                   <ActionForm token={token} onActionComplete={() => setRefreshSignal(n => n + 1)}
                     prefillUserId={prefill.userId} prefillUsername={prefill.username} />
-                </div>
+                </Panel>
+                <ActionHistory token={token} refreshSignal={refreshSignal} />
               </div>
-              <ActionHistory token={token} refreshSignal={refreshSignal} />
-            </main>
-          )}
-
-          {activeTab === "personnel" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 780 }} className="vey-grid">
-              <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} />
-            </main>
-          )}
-          {activeTab === "moderation" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }} className="vey-grid">
-              <ModerationPanel token={token} />
-            </main>
-          )}
-          {activeTab === "activity" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }} className="vey-grid">
-              <ActivityLog token={token} />
-            </main>
-          )}
-          {activeTab === "staff" && (
-            <main style={{ padding: 0 }}>
-              <StaffManagement token={token} />
-            </main>
-          )}
-
-          <div style={s.statusBar}>
-            <span style={s.statusBarCell}>Ready</span>
-            <span style={{ ...s.statusBarCell, ...s.statusBarCellGrow }}></span>
-            <span style={s.statusBarCell}>{roleLabel(adminInfo.role)}</span>
-          </div>
+            )}
+            {activeTab === "personnel" && (
+              <div className="grid-1"><PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} /></div>
+            )}
+            {activeTab === "moderation" && (
+              <div className="grid-1"><ModerationPanel token={token} /></div>
+            )}
+            {activeTab === "activity" && (
+              <div className="grid-1" style={{ maxWidth: 1040 }}><ActivityLog token={token} /></div>
+            )}
+            {activeTab === "staff" && <StaffManagement token={token} />}
+          </main>
         </div>
       </div>
+      <Banner />
+      {grantedOverlay}
     </div>
   );
 }
-
-// =========================================================
-// Styles — beveled admin console
-// =========================================================
-const s = {
-  desktopWrap: { minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "18px 16px 40px" },
-  shell: {
-    display: "flex", width: "100%", maxWidth: 1280,
-    background: "var(--xp-window)",
-    border: "1px solid #5C4508",
-    boxShadow: "2px 2px 0 rgba(0,0,0,0.20), inset 1px 1px 0 var(--xp-bevel-light)",
-  },
-  mainCol: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" },
-
-  appTitleBar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "4px 4px 4px 8px",
-    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 8%, var(--xp-title-l) 40%, var(--xp-title-r) 92%, #5C4508 100%)",
-    color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 13,
-    borderBottom: "1px solid #5C4508",
-  },
-  appTitleBarLeft: { display: "flex", alignItems: "center", gap: 7, letterSpacing: "0.01em" },
-  appTitleBarIcon: { fontSize: 13, filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.3))" },
-
-  sidebar: {
-    width: 208, flexShrink: 0,
-    background: "linear-gradient(180deg, #FBFAF6 0%, #F3EFE3 4%, #EAE3CE 100%)",
-    borderRight: "1px solid var(--xp-bevel-shadow)", display: "flex", flexDirection: "column",
-    padding: "12px 10px",
-  },
-
-  sidebarBrand: { display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 12px" },
-  brandGlyph: { color: "var(--xp-title-l)", fontSize: 17, lineHeight: 1 },
-  brandName: { fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 14, color: "var(--xp-text)" },
-  brandVersion: { fontSize: 10, color: "var(--xp-text-faint)" },
-  sidebarStatusLine: {
-    display: "flex", alignItems: "center", gap: 7, fontSize: 10.5, color: "var(--xp-text-dim)",
-    padding: "0 4px 12px", borderBottom: "1px solid #D9CFAE", marginBottom: 12,
-  },
-  liveDotSmall: { width: 7, height: 7, borderRadius: "50%", background: "var(--xp-green-bright)", border: "1px solid #1F5F1F", flexShrink: 0, animation: "blink 2s ease-in-out infinite" },
-  navGroupLabel: { fontSize: 10.5, fontWeight: 700, color: "#8A6412", padding: "0 4px 6px", letterSpacing: "0.02em", textTransform: "uppercase" },
-  navList: { display: "flex", flexDirection: "column", gap: 3, marginBottom: "auto" },
-  navItem: {
-    display: "flex", alignItems: "center", gap: 9, background: "transparent", border: "1px solid transparent",
-    borderRadius: 3, padding: "6px 8px", color: "var(--xp-text)",
-    fontSize: 12, textAlign: "left", fontFamily: "var(--sans)",
-  },
-  navItemActive: {
-    display: "flex", alignItems: "center", gap: 9,
-    background: "linear-gradient(180deg, #FFF3C4 0%, #FFE28A 100%)",
-    border: "1px solid #E8A100", borderRadius: 3, padding: "6px 8px",
-    color: "#4A3300", fontSize: 12, fontWeight: 700, textAlign: "left", fontFamily: "var(--sans)",
-  },
-  sidebarFooter: { paddingTop: 12, borderTop: "1px solid #D9CFAE", display: "flex", flexDirection: "column", gap: 8 },
-  whoami: { fontSize: 10.5, color: "var(--xp-text-dim)", padding: "0 2px" },
-
-  topStrip: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "8px 20px", borderBottom: "1px solid var(--xp-bevel-shadow)",
-    background: "var(--xp-window-light)",
-  },
-  topStripLeft: { display: "flex", alignItems: "center", gap: 10 },
-  topStripCmd: { fontSize: 13, color: "var(--xp-text)", fontWeight: 700, fontFamily: "var(--sans-display)" },
-  topStripRight: { display: "flex", alignItems: "center", gap: 18 },
-  vital: { display: "flex", alignItems: "center", gap: 6, fontSize: 11 },
-  vitalLabel: { color: "var(--xp-text-faint)" },
-  vitalValue: { color: "var(--xp-text-dim)", fontWeight: 700 },
-
-  contentGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "16px 20px 30px", maxWidth: 1100, alignItems: "start" },
-
-  panelBox: {
-    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
-    overflow: "hidden", animation: "fade-in 0.2s ease-out",
-    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
-  },
-  panelBar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "4px 6px 4px 9px",
-    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 12%, var(--xp-title-l) 45%, var(--xp-title-r) 100%)",
-    color: "var(--xp-text-titlebar)",
-  },
-  panelBarLeft: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, fontFamily: "var(--sans-display)" },
-  panelBarPath: {},
-  panelBarTag: { fontSize: 10, color: "#F6EACC", border: "1px solid rgba(255,255,255,0.5)", borderRadius: 2, padding: "1px 7px" },
-  panelBody: { padding: 16, background: "var(--xp-window)" },
-  tailButton: { background: "transparent", border: "none", color: "var(--xp-text-faint)", fontSize: 11, padding: "2px 6px" },
-
-  winBtnRow: { display: "flex", gap: 2 },
-  winBtn: {
-    width: 19, height: 17, display: "inline-flex", alignItems: "center", justifyContent: "center",
-    background: "linear-gradient(180deg, #D8B34A, #8A6412)", border: "1px solid #5C4508",
-    borderRadius: 2, color: "#fff", fontSize: 10, fontWeight: 700, lineHeight: 1,
-    boxShadow: "inset 1px 1px 0 rgba(255,255,255,0.5)",
-  },
-  winBtnClose: { background: "linear-gradient(180deg, #F1958A, #D8382A)", borderColor: "#A81D12" },
-
-  form: { display: "flex", flexDirection: "column", gap: 14 },
-  label: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 },
-  input: {
-    background: "var(--xp-field)",
-    border: "1px solid var(--xp-field-border-top)",
-    borderRight: "1px solid var(--xp-field-border-bottom)",
-    borderBottom: "1px solid var(--xp-field-border-bottom)",
-    borderRadius: 1,
-    padding: "6px 8px", color: "var(--xp-text)", width: "100%", fontFamily: "var(--sans)", fontSize: 12,
-    boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.12)",
-  },
-  errorBox: { background: "var(--xp-red-dim)", border: "1px solid #E3A79E", color: "#8A1F13", borderRadius: 2, padding: "7px 11px", fontSize: 12 },
-  primaryButton: {
-    background: "linear-gradient(180deg, #FCFCFC 0%, #ECE9D8 45%, #D9D5C1 50%, #ECE9D8 100%)",
-    color: "var(--xp-text)",
-    border: "1px solid var(--xp-bevel-dark)", borderRadius: 3, padding: "7px 18px", fontWeight: 700, fontSize: 12,
-    boxShadow: "inset 1px 1px 0 var(--xp-bevel-light)",
-  },
-  primaryButtonDanger: {
-    background: "linear-gradient(180deg, #FCEBEA 0%, #F3C9C4 45%, #E6A29A 50%, #F3C9C4 100%)",
-    color: "#6E140A",
-    border: "1px solid #A33A2C", borderRadius: 3, padding: "7px 18px", fontWeight: 700, fontSize: 12,
-    boxShadow: "inset 1px 1px 0 #FFF6F5",
-  },
-  fieldset: { display: "flex", flexDirection: "column", gap: 7, border: "1px solid var(--xp-bevel-shadow)", borderRadius: 3, padding: "10px 10px 12px", margin: 0 },
-  legend: { fontSize: 11, fontWeight: 700, color: "#8A6412", padding: "0 4px" },
-  section: { display: "flex", flexDirection: "column", gap: 8 },
-  sectionLabel: { fontSize: 10.5, fontWeight: 700, letterSpacing: "0.02em", color: "#8A6412" },
-  row: { display: "flex", gap: 7 },
-  segmentRow: { display: "flex", gap: 1, background: "var(--xp-bevel-shadow)", borderRadius: 3, overflow: "hidden" },
-  segment: { flex: 1, background: "var(--xp-field)", border: "none", padding: "7px 10px", color: "var(--xp-text-dim)", fontSize: 12, fontWeight: 600 },
-  segmentActive: { flex: 1, background: "linear-gradient(180deg, #FFF3C4, #FFE28A)", border: "none", padding: "7px 10px", color: "#4A3300", fontSize: 12, fontWeight: 700 },
-  segmentActiveDanger: { flex: 1, background: "linear-gradient(180deg, #F1958A, #D8382A)", border: "none", padding: "7px 10px", color: "#fff", fontSize: 12, fontWeight: 700 },
-  secondaryButton: {
-    background: "linear-gradient(180deg, #FCFCFC 0%, #ECE9D8 45%, #D9D5C1 50%, #ECE9D8 100%)",
-    border: "1px solid var(--xp-bevel-dark)", borderRadius: 3, padding: "0 13px", color: "var(--xp-text)", fontSize: 12, whiteSpace: "nowrap", height: 32,
-    boxShadow: "inset 1px 1px 0 var(--xp-bevel-light)",
-  },
-  resultOk: { background: "var(--xp-green-dim)", border: "1px solid #9FCB9F", color: "#1F5F1F", borderRadius: 2, padding: "8px 11px", fontSize: 12 },
-  resultError: { background: "var(--xp-red-dim)", border: "1px solid #E3A79E", color: "#8A1F13", borderRadius: 2, padding: "8px 11px", fontSize: 12 },
-  noteBox: { fontSize: 11, color: "var(--xp-text-dim)", background: "var(--xp-window-light)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "8px 10px", lineHeight: 1.5 },
-
-  empty: { color: "var(--xp-text-faint)", fontSize: 12, padding: "20px 0", textAlign: "center" },
-  listHeaderRow: {
-    display: "flex", gap: 10, padding: "4px 6px", fontSize: 10.5, fontWeight: 700,
-    background: "linear-gradient(180deg, #F3EFE3 0%, #E4DBBF 100%)", color: "#5C4508",
-    border: "1px solid var(--xp-bevel-shadow)", borderBottom: "none",
-  },
-  logFeed: { display: "flex", flexDirection: "column", maxHeight: 400, overflowY: "auto", border: "1px solid var(--xp-bevel-shadow)", background: "var(--xp-field)" },
-  logLine: { display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", padding: "5px 6px", borderBottom: "1px solid #EAE8DD", fontSize: 11.5 },
-  logTime: { color: "var(--xp-text-faint)", flexShrink: 0, flexBasis: 66 },
-  logStatus: { fontWeight: 700, flexShrink: 0, flexBasis: 62 },
-  logPlayer: { color: "var(--xp-text)", fontWeight: 600, flex: 1 },
-  logAction: { color: "var(--xp-text-dim)", flexBasis: 90, flexShrink: 0 },
-  logAmount: { color: "var(--xp-gold)", fontWeight: 700, flexBasis: 70, flexShrink: 0, textAlign: "right" },
-  logDelivery: { color: "var(--xp-text-faint)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "0 6px" },
-  logReason: { color: "var(--xp-text-faint)", fontStyle: "italic", width: "100%", fontSize: 11 },
-
-  loginWrap: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 },
-  loginPanel: {
-    width: "100%", maxWidth: 380, background: "var(--xp-window)",
-    border: "1px solid #5C4508", overflow: "hidden",
-    boxShadow: "2px 2px 0 rgba(0,0,0,0.20), inset 1px 1px 0 var(--xp-bevel-light)",
-  },
-  loginBar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "5px 5px 5px 10px",
-    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 10%, var(--xp-title-l) 45%, var(--xp-title-r) 100%)",
-  },
-  loginBarLeft: { display: "flex", alignItems: "center", gap: 7, color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 12.5 },
-  loginBarDots: { display: "flex", gap: 5 },
-  dot: { width: 8, height: 8, borderRadius: "50%", display: "inline-block" },
-  loginBarLabel: {},
-  loginBody: { padding: "24px 26px", background: "var(--xp-window)" },
-  brandRow: { display: "flex", alignItems: "baseline", gap: 8, marginBottom: 16 },
-  loginPrompt: { fontSize: 11.5, color: "var(--xp-text-dim)", marginBottom: 16 },
-  footnote: { marginTop: 18, fontSize: 10.5, color: "var(--xp-text-faint)", textAlign: "center" },
-
-  statusBar: {
-    display: "flex", alignItems: "center", gap: 0,
-    borderTop: "1px solid var(--xp-bevel-light)", background: "var(--xp-window)",
-    padding: "3px 6px", marginTop: "auto",
-  },
-  statusBarCell: {
-    fontSize: 10.5, color: "var(--xp-text-dim)", padding: "2px 10px",
-    border: "1px solid var(--xp-bevel-shadow)", borderTop: "1px solid var(--xp-bevel-dark)", borderLeft: "1px solid var(--xp-bevel-dark)",
-    background: "var(--xp-window)",
-  },
-  statusBarCellGrow: { flex: 1, border: "none" },
-};
-
-// =========================================================
-// Personnel Database styles
-// =========================================================
-const pd = {
-  wrap: { display: "flex", flexDirection: "column", gap: 16, padding: "16px 20px 30px", maxWidth: 780 },
-  searchRow: { display: "flex", gap: 8, alignItems: "center" },
-  emptyState: {
-    border: "1px solid var(--xp-bevel-shadow)", borderRadius: 3, padding: "40px 24px", background: "var(--xp-window-light)",
-    textAlign: "center", color: "var(--xp-text-dim)", fontSize: 12,
-    display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-  },
-  emptyStateSub: { fontSize: 11, color: "var(--xp-text-faint)" },
-
-  dossier: {
-    borderRadius: 3, border: "1px solid #A99060", background: "var(--xp-window)",
-    overflow: "hidden", animation: "fade-in 0.25s ease-out",
-    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
-  },
-  dossierBar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "5px 8px 5px 10px",
-    background: "linear-gradient(180deg, var(--xp-title-m) 0%, var(--xp-title-l) 12%, var(--xp-title-l) 45%, var(--xp-title-r) 100%)",
-  },
-  dossierBarLeft: { display: "flex", alignItems: "center", gap: 6, color: "var(--xp-text-titlebar)", fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 12 },
-  dossierBarPath: {},
-  liveDot: { width: 8, height: 8, borderRadius: "50%", background: "var(--xp-green-bright)", border: "1px solid #fff", animation: "blink 1.8s ease-in-out infinite" },
-
-  dossierBody: { display: "flex", gap: 20, padding: "20px 18px" },
-  portraitCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 },
-  portraitFrame: {
-    width: 84, height: 84, borderRadius: 2, border: "2px solid #A99060",
-    background: "var(--xp-field)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
-    boxShadow: "inset 1px 1px 3px rgba(0,0,0,0.2)",
-  },
-  portraitImg: { width: "100%", height: "100%", objectFit: "cover" },
-  clearanceTag: {
-    fontSize: 9.5, color: "var(--xp-green)", border: "1px solid #9FCB9F", background: "var(--xp-green-dim)",
-    borderRadius: 2, padding: "3px 7px", textAlign: "center", fontWeight: 700,
-  },
-
-  identityCol: { flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 },
-  nameRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
-  name: { fontSize: 17, fontWeight: 700, fontFamily: "var(--sans-display)", color: "var(--xp-text)" },
-  creditsBadge: { fontSize: 11.5, color: "#4A3300", background: "linear-gradient(180deg, #FFF3C4, #FFE28A)", border: "1px solid #E8A100", borderRadius: 3, padding: "3px 10px", fontWeight: 700 },
-  userIdLine: { fontSize: 11, color: "var(--xp-text-faint)" },
-
-  notFoundBox: { marginTop: 10, fontSize: 12, color: "var(--xp-text-dim)", background: "var(--xp-red-dim)", border: "1px solid #E3A79E", borderRadius: 2, padding: "10px 13px", lineHeight: 1.5 },
-
-  hairline: { height: 1, background: "var(--xp-bevel-shadow)", margin: "8px 0" },
-  statGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px 18px" },
-  statCell: { display: "flex", flexDirection: "column", gap: 2 },
-  statLabel: { fontSize: 9.5, color: "#8A6412", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.01em" },
-  statValue: { fontSize: 13, fontWeight: 600, color: "var(--xp-text)" },
-  statSub: { fontSize: 10.5, color: "var(--xp-text-faint)" },
-
-  sectionDivider: {
-    fontSize: 11, fontWeight: 700, color: "#5C4508", padding: "6px 18px",
-    background: "linear-gradient(180deg, #F3EFE3 0%, #E4DBBF 100%)",
-    borderTop: "1px solid var(--xp-bevel-shadow)", borderBottom: "1px solid var(--xp-bevel-shadow)",
-  },
-
-  inventoryWrap: { display: "flex", flexDirection: "column", gap: 8, padding: "12px 18px 18px" },
-  invCategory: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, overflow: "hidden", background: "var(--xp-field)" },
-  invCategoryHeader: { width: "100%", display: "flex", alignItems: "center", gap: 8, background: "var(--xp-window-light)", border: "none", padding: "7px 10px", color: "var(--xp-text)", textAlign: "left", borderBottom: "1px solid var(--xp-bevel-shadow)" },
-  invCategoryLabel: { fontSize: 11.5, fontWeight: 700, flex: 1 },
-  invCategoryCount: { fontSize: 10.5, color: "#5C4508", background: "#F3E9CC", border: "1px solid #D9CFAE", borderRadius: 9, padding: "0 7px", minWidth: 18, textAlign: "center" },
-  invChevron: { color: "var(--xp-text-dim)", fontSize: 12, transition: "transform 0.15s ease" },
-  invCategoryBody: { display: "flex", flexDirection: "column", gap: 8, padding: "9px 10px 11px" },
-  invGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(136px, 1fr))", gap: 6, padding: "9px 11px" },
-  invItem: { fontSize: 11.5, color: "var(--xp-text-dim)", background: "var(--xp-window-light)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "6px 8px" },
-  invEmpty: { fontSize: 11.5, color: "var(--xp-text-faint)", padding: "10px", fontStyle: "italic" },
-
-  heldList: { display: "flex", flexDirection: "column", gap: 5 },
-  heldRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr auto 56px auto",
-    alignItems: "center",
-    gap: 8,
-    background: "var(--xp-window-light)",
-    border: "1px solid var(--xp-bevel-shadow)",
-    borderRadius: 2,
-    padding: "6px 9px",
-  },
-  heldName: { fontSize: 12, color: "var(--xp-text)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  heldCount: { fontSize: 11, color: "var(--xp-gold)", fontWeight: 700, flexShrink: 0 },
-  heldQtyInput: {
-    background: "var(--xp-field)",
-    border: "1px solid var(--xp-field-border-top)",
-    borderRight: "1px solid var(--xp-field-border-bottom)",
-    borderBottom: "1px solid var(--xp-field-border-bottom)",
-    borderRadius: 1,
-    padding: "5px 6px",
-    color: "var(--xp-text)",
-    width: 56,
-    fontFamily: "var(--sans)",
-    fontSize: 11.5,
-    textAlign: "center",
-    boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.12)",
-  },
-  heldRemoveBtn: {
-    background: "linear-gradient(180deg, #FCEBEA 0%, #F3C9C4 45%, #E6A29A 50%, #F3C9C4 100%)",
-    border: "1px solid #A33A2C",
-    borderRadius: 3,
-    padding: "5px 10px",
-    color: "#6E140A",
-    fontSize: 11,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-    boxShadow: "inset 1px 1px 0 #FFF6F5",
-  },
-
-  addRowWrap: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    paddingTop: 8,
-    borderTop: "1px dashed var(--xp-bevel-shadow)",
-  },
-  addRowLabel: { fontSize: 10, color: "var(--xp-text-faint)", fontWeight: 700, letterSpacing: "0.02em" },
-  addRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 56px auto",
-    alignItems: "center",
-    gap: 8,
-  },
-  addSelect: {
-    background: "var(--xp-field)",
-    border: "1px solid var(--xp-field-border-top)",
-    borderRight: "1px solid var(--xp-field-border-bottom)",
-    borderBottom: "1px solid var(--xp-field-border-bottom)",
-    borderRadius: 1,
-    padding: "6px 8px",
-    color: "var(--xp-text)",
-    fontFamily: "var(--sans)",
-    fontSize: 11.5,
-    width: "100%",
-    boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.12)",
-  },
-  addBtn: {
-    background: "linear-gradient(180deg, #FCFCFC 0%, #ECE9D8 45%, #D9D5C1 50%, #ECE9D8 100%)",
-    border: "1px solid var(--xp-bevel-dark)",
-    borderRadius: 3,
-    padding: "6px 12px",
-    color: "var(--xp-text)",
-    fontSize: 11,
-    fontWeight: 700,
-    whiteSpace: "nowrap",
-    boxShadow: "inset 1px 1px 0 var(--xp-bevel-light)",
-  },
-
-  historyWrap: { display: "flex", flexDirection: "column", gap: 1, padding: "10px 18px 18px", background: "var(--xp-field)", margin: "0 18px 18px", border: "1px solid var(--xp-bevel-shadow)" },
-  historyRow: { display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", padding: "7px 4px", borderBottom: "1px solid #EAE8DD", fontSize: 11.5 },
-  historyDot: { width: 7, height: 7, borderRadius: "50%", flexShrink: 0, border: "1px solid rgba(0,0,0,0.2)" },
-  historyAction: { color: "var(--xp-text)", fontWeight: 700 },
-  historyAmount: { color: "var(--xp-gold)", fontWeight: 700 },
-  historyTime: { color: "var(--xp-text-faint)", fontSize: 10.5, marginLeft: "auto" },
-  historyReason: { color: "var(--xp-text-faint)", fontStyle: "italic", width: "100%", fontSize: 11 },
-
-  dossierFooter: { padding: "4px 18px 20px", display: "flex", justifyContent: "flex-end", gap: 10 },
-};
-
-// =========================================================
-// Moderation styles
-// =========================================================
-const md = {
-  wrap: { display: "flex", flexDirection: "column", gap: 14, padding: "16px 20px 30px", maxWidth: 900 },
-  searchRow: { display: "flex", gap: 8, alignItems: "center" },
-  summaryBox: {
-    display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", padding: 14,
-    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
-    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
-  },
-  portrait: { width: 64, height: 64, objectFit: "cover", border: "2px solid #A99060", borderRadius: 2, background: "var(--xp-field)" },
-  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
-  chip: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "2px 8px" },
-  list: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 560, overflowY: "auto" },
-  card: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)", padding: "9px 11px", display: "flex", flexDirection: "column", gap: 5 },
-  cardTop: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
-  badge: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "1px 8px" },
-  incId: { fontSize: 11, color: "var(--xp-text-dim)", fontFamily: "monospace" },
-  time: { fontSize: 10.5, color: "var(--xp-text-faint)", marginLeft: "auto" },
-  target: { fontSize: 12, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" },
-  dim: { color: "var(--xp-text-faint)" },
-  linkBtn: { background: "transparent", border: "none", color: "var(--xp-text-link)", textDecoration: "underline", fontSize: 11, padding: "0 6px" },
-  reason: { fontSize: 12.5, color: "var(--xp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
-  meta: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "var(--xp-text-dim)" },
-  notes: { fontSize: 11, color: "var(--xp-text-faint)", fontStyle: "italic", whiteSpace: "pre-wrap", wordBreak: "break-word" },
-};
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ErrorBoundary>
