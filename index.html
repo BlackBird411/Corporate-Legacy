@@ -3,29 +3,30 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#05070b" />
 <title>Veyrathis — Admin Console</title>
 
-<!-- React + ReactDOM (UMD builds, no build step needed) -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<!-- Babel lets us write JSX directly in this file and have the browser compile it -->
-<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<!-- Single source of truth for the backend URL (used by the boot screen and the app). -->
+<script>window.VEY_CONFIG = { SUPABASE_URL: "https://ngfkmluzrgbphgowrrul.supabase.co" };</script>
+
+<!-- React + ReactDOM (UMD) and Babel, pinned to exact versions. `defer` lets the boot
+     screen paint immediately while these download. Order is preserved. -->
+<script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script defer src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Trebuchet+MS:wght@400;700&family=Tahoma&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
 <style>
   /* =========================================================
      Veyra — vintage browser-chrome admin console
-     Paper-white surfaces, brass/gold rules in place of the old
-     blue titlebars, no iconography. Component tree and all data
-     logic are unchanged from the original build — this file only
-     restyles presentation. Variable names are kept as --xp-* since
-     they're referenced throughout every style object below; only
-     the values underneath have changed.
+     Paper-white surfaces, brass/gold rules. Variable names are kept
+     as --xp-* since they're referenced throughout the style objects.
      ========================================================= */
   :root {
-    /* Desktop + window surfaces */
     --xp-desktop: #D8D3C4;
     --xp-desktop-dark: #C7C1AE;
     --xp-window: #FFFFFF;
@@ -33,16 +34,13 @@
     --xp-panel-inset: #FFFFFF;
     --xp-field: #FFFFFF;
 
-    /* Titlebar (active) — brass/gold in place of Luna blue */
     --xp-title-l: #8A6412;
     --xp-title-m: #B4901E;
     --xp-title-r: #8A6412;
     --xp-title-glow: #D8B34A;
-    /* Titlebar (inactive / secondary panels) */
     --xp-title-inactive-l: #A99A76;
     --xp-title-inactive-r: #C2B590;
 
-    /* Bevel edges — kept subtle so panels read as paper, not chrome */
     --xp-bevel-light: #FFFFFF;
     --xp-bevel-lightest: #FDFCF8;
     --xp-bevel-shadow: #C8C2AE;
@@ -81,6 +79,7 @@
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
+  #root { height: auto; min-height: 100%; }
   button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; opacity: 0.55; }
@@ -92,61 +91,435 @@
   ::-webkit-scrollbar-thumb { background: var(--xp-window); border: 1px solid var(--xp-bevel-shadow); box-shadow: inset 1px 1px 0 var(--xp-bevel-light), inset -1px -1px 0 var(--xp-bevel-dark); }
   ::-webkit-scrollbar-thumb:hover { background: #DEDACB; }
 
-  /* Native select dropdown popovers ignore inline styles in some browsers,
-     so we force the classic white-field look at the CSS level for every
-     select + option in the app. */
-  select {
-    background-color: var(--xp-field);
-    color: var(--xp-text);
-    border: 1px solid var(--xp-field-border-top);
-  }
-  select option {
-    background-color: var(--xp-field);
-    color: var(--xp-text);
-  }
-  input[type="number"] {
-    background-color: var(--xp-field);
-    color: var(--xp-text);
-  }
+  select { background-color: var(--xp-field); color: var(--xp-text); border: 1px solid var(--xp-field-border-top); }
+  select option { background-color: var(--xp-field); color: var(--xp-text); }
+  input[type="number"] { background-color: var(--xp-field); color: var(--xp-text); }
   input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-    opacity: 0.85;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
+  input[type="number"]::-webkit-outer-spin-button { opacity: 0.85; }
+  input[type="checkbox"] { accent-color: #8A6412; }
 
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   @keyframes fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes bar-fill { from { width: 0; } }
+  @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+  /* ---------- responsive behaviour for the inline-styled layout ---------- */
+  @media (max-width: 900px) {
+    .vey-shell { flex-direction: column; }
+    .vey-sidebar { width: auto !important; border-right: none !important; border-bottom: 1px solid var(--xp-bevel-shadow); }
+    .vey-nav { flex-direction: row !important; flex-wrap: wrap; margin-bottom: 12px !important; }
+    .vey-sidebar-footer { flex-direction: row !important; align-items: center; justify-content: space-between; }
+    .vey-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
+    .vey-dossier-body { flex-direction: column; align-items: center; }
+    .vey-stat-grid { grid-template-columns: 1fr 1fr !important; }
+  }
+  @media (max-width: 700px) {
+    .vey-top-strip { flex-direction: column; align-items: flex-start !important; gap: 6px; }
+    .vey-top-right { flex-wrap: wrap; gap: 10px !important; }
+    .vey-desktop { padding: 0 !important; }
+  }
+
+  /* =========================================================
+     BOOT SEQUENCE — plain HTML/CSS/JS so it paints before React
+     and Babel have finished downloading and compiling.
+     ========================================================= */
+  #boot {
+    position: fixed; inset: 0; z-index: 10000; overflow: hidden;
+    background: #05070b; color: #D8C48A;
+    font-family: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', Consolas, Menlo, monospace;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.8s ease, transform 0.8s ease, visibility 0s linear 0.8s;
+  }
+  #boot.boot-exit { opacity: 0; transform: scale(1.05); visibility: hidden; pointer-events: none; }
+
+  .boot-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 42%, rgba(180,144,30,0.16) 0%, rgba(5,7,11,0) 58%),
+      radial-gradient(ellipse at 50% 120%, rgba(216,179,74,0.10) 0%, rgba(5,7,11,0) 60%),
+      #05070b;
+  }
+  .boot-grid {
+    position: absolute; left: -60%; right: -60%; bottom: 0; height: 52%;
+    background-image:
+      linear-gradient(rgba(216,179,74,0.26) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(216,179,74,0.26) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: perspective(520px) rotateX(64deg);
+    transform-origin: 50% 100%;
+    -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 88%);
+            mask-image: linear-gradient(to top, #000 0%, transparent 88%);
+    animation: boot-grid-move 2.4s linear infinite;
+  }
+  @keyframes boot-grid-move { from { background-position: 0 0; } to { background-position: 0 60px; } }
+  .boot-scan {
+    position: absolute; left: 0; right: 0; height: 2px; top: -2%;
+    background: linear-gradient(90deg, transparent, rgba(240,207,106,0.85), transparent);
+    box-shadow: 0 0 22px 4px rgba(216,179,74,0.35);
+    animation: boot-scan 3.8s linear infinite;
+  }
+  @keyframes boot-scan { 0% { top: -2%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { top: 102%; opacity: 0; } }
+  .boot-crt {
+    position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+  }
+  .bc { position: absolute; width: 26px; height: 26px; border: 0 solid rgba(216,179,74,0.7); }
+  .bc-tl { top: 22px; left: 22px; border-top-width: 1px; border-left-width: 1px; }
+  .bc-tr { top: 22px; right: 22px; border-top-width: 1px; border-right-width: 1px; }
+  .bc-bl { bottom: 22px; left: 22px; border-bottom-width: 1px; border-left-width: 1px; }
+  .bc-br { bottom: 22px; right: 22px; border-bottom-width: 1px; border-right-width: 1px; }
+  .boot-meta { position: absolute; top: 28px; left: 58px; font-size: 11px; letter-spacing: 0.18em; color: rgba(216,196,138,0.55); }
+
+  .boot-stage { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 20px; }
+  .boot-core { position: relative; width: min(380px, 70vw); aspect-ratio: 1; }
+  .boot-core svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .boot-readout {
+    position: absolute; left: 50%; top: 53%; transform: translate(-50%, -50%);
+    text-align: center; font-family: 'Orbitron', 'Share Tech Mono', monospace; color: #F0CF6A;
+    text-shadow: 0 0 14px rgba(240,207,106,0.55);
+  }
+  #boot-pct { font-size: clamp(26px, 6vw, 38px); font-weight: 700; letter-spacing: 0.04em; line-height: 1; }
+  .boot-unit { font-size: 10px; letter-spacing: 0.4em; margin-top: 6px; color: rgba(216,196,138,0.7); text-shadow: none; }
+
+  .boot-title {
+    margin: 18px -0.46em 0 0; font-family: 'Orbitron', 'Share Tech Mono', monospace; font-weight: 700;
+    font-size: clamp(22px, 4.6vw, 34px); letter-spacing: 0.46em; color: #F3E3AE; text-align: center;
+    text-shadow: 0 0 18px rgba(216,179,74,0.45);
+    animation: boot-title-in 1.5s 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    transition: text-shadow 0.4s ease;
+  }
+  @keyframes boot-title-in {
+    from { opacity: 0; letter-spacing: 1.1em; filter: blur(7px); }
+    to   { opacity: 1; letter-spacing: 0.46em; filter: blur(0); }
+  }
+  .boot-sub { margin-top: 8px; font-size: 12px; letter-spacing: 0.34em; color: rgba(216,196,138,0.75); text-align: center; min-height: 1.4em; }
+
+  .boot-log { list-style: none; margin: 26px 0 0; padding: 0 0 0 14px; width: min(400px, 86vw); border-left: 1px solid rgba(216,179,74,0.45); }
+  .boot-log li { display: flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.9; opacity: 0; transform: translateX(-6px); transition: opacity 0.3s ease, transform 0.3s ease; }
+  .boot-log li.on { opacity: 1; transform: none; }
+  .bl-n { color: #D8C48A; white-space: nowrap; }
+  .bl-l { flex: 1; border-bottom: 1px dotted rgba(216,196,138,0.3); transform: translateY(-3px); min-width: 12px; }
+  .bl-s { color: rgba(216,196,138,0.5); min-width: 62px; text-align: right; letter-spacing: 0.08em; }
+  .bl-s.pending { animation: blink 1s ease-in-out infinite; }
+  .bl-s.ok { color: #F0CF6A; }
+  .bl-s.bad { color: #E0603C; }
+
+  .boot-skip { position: absolute; bottom: -62px; left: 0; right: 0; text-align: center; font-size: 11px; letter-spacing: 0.22em; color: rgba(216,196,138,0.45); opacity: 0; transition: opacity 0.6s ease; }
+  .boot-skip.on { opacity: 1; }
+  .boot-fail { margin-top: 22px; text-align: center; color: #E0603C; font-size: 12px; line-height: 1.7; max-width: 420px; }
+  .boot-fail[hidden] { display: none; }
+  .boot-fail button { margin-top: 10px; background: transparent; border: 1px solid #D8B34A; color: #F0CF6A; padding: 7px 18px; letter-spacing: 0.2em; font-family: inherit; }
+
+  #boot.boot-done .boot-title { text-shadow: 0 0 30px rgba(240,207,106,0.95); }
+  #boot.boot-done .boot-sub { color: #F0CF6A; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .boot-grid, .boot-scan, .boot-title, .bl-s.pending { animation: none !important; }
+    #boot, .boot-log li { transition-duration: 0.01ms !important; }
+    @keyframes blink { 0%, 100% { opacity: 1; } }
+    .liveDotSmall { animation: none !important; }
+  }
+  @media (max-width: 520px) { .boot-meta { display: none; } .boot-skip { bottom: -44px; } }
 </style>
 </head>
 <body>
 
+<noscript>
+  <div style="padding:40px;font-family:sans-serif;text-align:center">The Veyrathis Admin Console needs JavaScript to run.</div>
+</noscript>
+
+<!-- ================= BOOT SCREEN ================= -->
+<div id="boot" role="status" aria-live="polite" aria-label="Loading Veyrathis Admin Console">
+  <div class="boot-bg"></div>
+  <div class="boot-grid"></div>
+  <div class="boot-scan"></div>
+  <div class="boot-crt"></div>
+  <span class="bc bc-tl"></span><span class="bc bc-tr"></span><span class="bc bc-bl"></span><span class="bc bc-br"></span>
+  <div class="boot-meta">VEY-ADMIN 1.5.0</div>
+
+  <div class="boot-stage">
+    <div class="boot-core">
+      <svg id="boot-svg" viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <filter id="bglow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+        <g fill="none" stroke="#B4901E">
+          <circle cx="200" cy="200" r="194" stroke-opacity="0.4" stroke-dasharray="1 9">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="70s" repeatCount="indefinite" />
+          </circle>
+          <g id="boot-ticks" stroke-opacity="0.6">
+            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="46s" repeatCount="indefinite" />
+          </g>
+          <circle cx="200" cy="200" r="150" stroke="#D8B34A" stroke-width="2.5" stroke-dasharray="120 822" filter="url(#bglow)">
+            <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="5s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="140" stroke-width="1" stroke-opacity="0.45" stroke-dasharray="40 40">
+            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="14s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="128" stroke="#F0CF6A" stroke-width="2" stroke-opacity="0.85" stroke-dasharray="60 744">
+            <animateTransform attributeName="transform" type="rotate" from="360 200 200" to="0 200 200" dur="3.6s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="200" cy="200" r="110" stroke="#2A2410" stroke-width="6" />
+          <circle id="boot-ring" cx="200" cy="200" r="110" stroke="#F0CF6A" stroke-width="6" stroke-linecap="round" transform="rotate(-90 200 200)" filter="url(#bglow)" />
+        </g>
+        <polygon points="200,138 209,147 200,156 191,147" fill="#D8B34A">
+          <animate attributeName="opacity" values="1;0.35;1" dur="1.8s" repeatCount="indefinite" />
+        </polygon>
+      </svg>
+      <div class="boot-readout"><div><span id="boot-pct">0</span></div><div class="boot-unit">percent</div></div>
+    </div>
+
+    <h1 class="boot-title">VEYRATHIS</h1>
+    <div class="boot-sub" id="boot-sub">Admin Console</div>
+
+    <ul class="boot-log" id="boot-log">
+      <li><span class="bl-n">Secure channel</span><span class="bl-l"></span><span class="bl-s pending">···</span></li>
+      <li><span class="bl-n">Data core uplink</span><span class="bl-l"></span><span class="bl-s pending">···</span></li>
+      <li><span class="bl-n">Operator interface</span><span class="bl-l"></span><span class="bl-s pending">···</span></li>
+      <li><span class="bl-n">Session policy</span><span class="bl-l"></span><span class="bl-s pending">···</span></li>
+    </ul>
+
+    <div class="boot-skip" id="boot-skip">Press any key to skip</div>
+    <div class="boot-fail" id="boot-fail" hidden>
+      The interface didn't finish loading. Check your connection, then reload.
+      <br /><button type="button" onclick="location.reload()">Reload</button>
+    </div>
+  </div>
+</div>
+
 <div id="root"></div>
+
+<script>
+/* Boot sequence controller. Runs immediately, independent of React/Babel.
+   The app calls window.__veyBootReady() once it has mounted; the sequence
+   holds at 94% until then, so the animation reflects real load state. */
+(function () {
+  var boot = document.getElementById("boot");
+  if (!boot) return;
+  var root = document.getElementById("root");
+  root.setAttribute("inert", "");
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var MIN_MS = reduce ? 800 : 3800;
+  var FAIL_MS = 15000;
+  var SKIP_AFTER_MS = 700;
+
+  var pctEl = document.getElementById("boot-pct");
+  var ringEl = document.getElementById("boot-ring");
+  var subEl = document.getElementById("boot-sub");
+  var skipEl = document.getElementById("boot-skip");
+  var failEl = document.getElementById("boot-fail");
+  var svgEl = document.getElementById("boot-svg");
+  var logItems = document.querySelectorAll("#boot-log li");
+
+  var CIRC = 2 * Math.PI * 110;
+  ringEl.style.strokeDasharray = CIRC;
+  ringEl.style.strokeDashoffset = CIRC;
+  if (reduce && svgEl.pauseAnimations) svgEl.pauseAnimations();
+
+  // tick marks around the outer ring
+  var ticks = document.getElementById("boot-ticks");
+  var NS = "http://www.w3.org/2000/svg";
+  for (var i = 0; i < 90; i++) {
+    var a = (i * 4) * Math.PI / 180;
+    var r1 = 170, r2 = i % 5 === 0 ? 182 : 176;
+    var ln = document.createElementNS(NS, "line");
+    ln.setAttribute("x1", 200 + Math.cos(a) * r1);
+    ln.setAttribute("y1", 200 + Math.sin(a) * r1);
+    ln.setAttribute("x2", 200 + Math.cos(a) * r2);
+    ln.setAttribute("y2", 200 + Math.sin(a) * r2);
+    ticks.appendChild(ln);
+  }
+
+  var appReady = false;
+  var uplink = null; // null = pending, true = reachable, false = unreachable
+  window.__veyBootReady = function () { appReady = true; };
+
+  // Real reachability check (opaque response is fine — we only need to know the host answers).
+  (function () {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctl) ctl.abort(); }, 5000);
+    fetch(window.VEY_CONFIG.SUPABASE_URL + "/rest/v1/", { method: "GET", mode: "no-cors", signal: ctl ? ctl.signal : undefined })
+      .then(function () { uplink = true; })
+      .catch(function () { uplink = false; })
+      .then(function () { clearTimeout(to); });
+  })();
+
+  var steps = [
+    { at: 350,  hold: 450, ready: function () { return true; },          text: function () { return "READY"; } },
+    { at: 1100, hold: 450, ready: function () { return uplink !== null; }, text: function () { return uplink ? "ONLINE" : "OFFLINE"; }, bad: function () { return uplink === false; } },
+    { at: 1850, hold: 450, ready: function () { return appReady; },        text: function () { return "LOADED"; } },
+    { at: 2600, hold: 450, ready: function () { return true; },          text: function () { return "ACTIVE"; } }
+  ];
+  for (var s = 0; s < steps.length; s++) {
+    steps[s].node = logItems[s];
+    steps[s].status = logItems[s].querySelector(".bl-s");
+  }
+
+  var t0 = performance.now(), last = t0, shown = 0, finished = false, skipping = false, failShown = false;
+
+  function setProgress(p) {
+    ringEl.style.strokeDashoffset = CIRC * (1 - p);
+    pctEl.textContent = Math.round(p * 100);
+  }
+  function resolveStep(st) {
+    st.done = true;
+    st.status.textContent = st.text();
+    st.status.className = "bl-s " + (st.bad && st.bad() ? "bad" : "ok");
+  }
+
+  function frame(now) {
+    if (finished) return;
+    var el = now - t0, dt = now - last; last = now;
+    var allDone = true;
+
+    for (var i = 0; i < steps.length; i++) {
+      var st = steps[i];
+      if (!st.shown && (el >= st.at || skipping)) { st.shown = true; st.node.classList.add("on"); }
+      if (st.shown && !st.done && ((el >= st.at + st.hold) || skipping) && st.ready()) resolveStep(st);
+      if (!st.done) allDone = false;
+    }
+
+    if (el > SKIP_AFTER_MS && !skipEl.classList.contains("on")) skipEl.classList.add("on");
+
+    var timeP = Math.min(el / MIN_MS, 1);
+    var target = (allDone || skipping) && appReady ? 1 : Math.min(timeP, 0.94);
+    shown += (target - shown) * (1 - Math.exp(-dt / 140));
+    setProgress(shown);
+
+    if (appReady && (skipping || (allDone && el >= MIN_MS)) && shown > 0.985) return finish();
+
+    if (!appReady && el > FAIL_MS && !failShown) {
+      failShown = true;
+      failEl.hidden = false;
+      subEl.textContent = "Load failed";
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    setProgress(1);
+    subEl.textContent = "Interface online";
+    boot.classList.add("boot-done");
+    window.removeEventListener("keydown", onSkip);
+    boot.removeEventListener("pointerdown", onSkip);
+    setTimeout(function () {
+      boot.classList.add("boot-exit");
+      root.removeAttribute("inert");
+      document.documentElement.classList.add("boot-complete");
+      var firstInput = root.querySelector("input");
+      if (firstInput) firstInput.focus();
+      setTimeout(function () { if (boot.parentNode) boot.parentNode.removeChild(boot); }, 1000);
+    }, reduce ? 150 : 650);
+  }
+
+  function onSkip() {
+    if (performance.now() - t0 < SKIP_AFTER_MS) return;
+    skipping = true;
+  }
+  window.addEventListener("keydown", onSkip);
+  boot.addEventListener("pointerdown", onSkip);
+
+  requestAnimationFrame(function (n) { t0 = last = n; frame(n); });
+})();
+</script>
 
 <script type="text/babel" data-presets="react">
 
 // =========================================================
 // CONFIG
 // =========================================================
-const SUPABASE_URL = "https://ngfkmluzrgbphgowrrul.supabase.co";
-const FUNCTION_URL = SUPABASE_URL + "/functions/v1/trigger-admin-action";
-const LIST_ACTIONS_URL = SUPABASE_URL + "/functions/v1/list-admin-function";
-const ROBLOX_LOOKUP_URL = SUPABASE_URL + "/functions/v1/roblox-lookup";
-const PROFILE_LOOKUP_URL = SUPABASE_URL + "/functions/v1/player-profile-lookup";
-const INVENTORY_ACTION_URL = SUPABASE_URL + "/functions/v1/admin-inventory-action";
-const LOGIN_FUNCTION_URL = SUPABASE_URL + "/functions/v1/admin-login-function";
-// NOTE: this endpoint does not exist yet — see the Supabase setup notes
-// at the end of this file for the table + edge function to add.
-const LIST_ACTIVITY_URL = SUPABASE_URL + "/functions/v1/list-admin-activity";
-const LIST_MOD_URL = SUPABASE_URL + "/functions/v1/list-mod-incidents";
+const SUPABASE_URL = (window.VEY_CONFIG && window.VEY_CONFIG.SUPABASE_URL) || "https://ngfkmluzrgbphgowrrul.supabase.co";
+const fn = (slug) => `${SUPABASE_URL}/functions/v1/${slug}`;
+
+const FUNCTION_URL = fn("trigger-admin-action");
+const LIST_ACTIONS_URL = fn("list-admin-function");
+const ROBLOX_LOOKUP_URL = fn("roblox-lookup");
+const PROFILE_LOOKUP_URL = fn("player-profile-lookup");
+const INVENTORY_ACTION_URL = fn("admin-inventory-action");
+const LOGIN_FUNCTION_URL = fn("admin-login-function");
+const LIST_ACTIVITY_URL = fn("list-admin-activity");
+const LIST_MOD_URL = fn("list-mod-incidents");
+const STAFF_URL = fn("admin-staff-manage");
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+// =========================================================
+// API layer — one place for auth headers, error shaping and
+// automatic sign-out when the server rejects the session.
+// =========================================================
+class ApiError extends Error {
+  constructor(message, status) { super(message); this.status = status; }
+}
+let unauthorizedHandler = null;
+
+async function api(url, { token, body } = {}) {
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: body !== undefined ? "POST" : "GET",
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (_e) {
+    throw new ApiError("Network error — check your connection and try again.", 0);
+  }
+
+  let json = null;
+  try { json = await res.json(); } catch (_e) { /* non-JSON body */ }
+
+  if (res.status === 401 && token && unauthorizedHandler) unauthorizedHandler();
+  if (!res.ok || (json && json.error)) {
+    throw new ApiError((json && json.error) || `Request failed (${res.status}).`, res.status);
+  }
+  return json || {};
+}
+
+// =========================================================
+// Roles — mirrors the access rules enforced by the edge functions.
+// The server is the authority; this only decides what to show.
+// =========================================================
+const ROLES = {
+  owner: {
+    label: "Owner",
+    blurb: "Full access, including staff accounts.",
+    tabs: ["actions", "personnel", "moderation", "activity", "staff"],
+  },
+  database_moderator: {
+    label: "Database Moderator",
+    blurb: "Actions, Personnel, Moderation and Activity Log.",
+    tabs: ["actions", "personnel", "moderation", "activity"],
+  },
+  game_moderator: {
+    label: "Game Moderator",
+    blurb: "Moderation records only.",
+    tabs: ["moderation"],
+  },
+};
+const roleLabel = (role) => (ROLES[role] && ROLES[role].label) || role || "Unknown";
+const tabsForRole = (role) => (ROLES[role] && ROLES[role].tabs) || [];
+
+const NAV_ITEMS = [
+  { key: "actions", label: "Actions" },
+  { key: "personnel", label: "Personnel" },
+  { key: "moderation", label: "Moderation" },
+  { key: "activity", label: "Activity Log" },
+  { key: "staff", label: "Staff" },
+];
+const TAB_TITLES = {
+  actions: "Actions Overview",
+  personnel: "Personnel Overview",
+  moderation: "Moderation Records",
+  activity: "Activity Log",
+  staff: "Staff Management",
+};
 
 // =========================================================
 // Item database — mirrored from ReplicatedStorage.ItemDatabase
@@ -176,7 +549,7 @@ const ITEM_DATABASE = {
 };
 
 // =========================================================
-// Live clock — signature element, ticks in the top strip
+// Live clock
 // =========================================================
 function useClock() {
   const [now, setNow] = useState(new Date());
@@ -191,13 +564,54 @@ function formatClock(d) {
   const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
   return `${day} ${time}`;
 }
+function formatDateTime(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString(undefined, { year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+}
+function relativeTime(iso) {
+  if (!iso) return "never";
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.floor(hr / 24);
+  return d === 1 ? "1 day ago" : `${d} days ago`;
+}
+
+// =========================================================
+// Error boundary — a render crash shows a recovery screen, not a blank page
+// =========================================================
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(err) { console.error("Console crashed:", err); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div style={s.loginWrap}>
+        <div style={s.loginPanel}>
+          <div style={s.loginBar}><span style={s.loginBarLeft}>Veyrathis Admin — Error</span></div>
+          <div style={s.loginBody}>
+            <div style={s.errorBox}>⚠ Something went wrong while drawing this page.</div>
+            <p style={{ ...s.loginPrompt, marginTop: 14 }}>Your session is still valid. Reload to continue.</p>
+            <button type="button" style={s.primaryButton} onClick={() => window.location.reload()}>Reload console</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
 
 // =========================================================
 // Login
 // =========================================================
-function Login({ onLoginSuccess }) {
+function Login({ onLoginSuccess, notice }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [capsOn, setCapsOn] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -206,21 +620,12 @@ function Login({ onLoginSuccess }) {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(LOGIN_FUNCTION_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const json = await res.json();
-      setLoading(false);
-      if (!res.ok || json.error) {
-        setError(json.error || "Wrong username or password.");
-        return;
-      }
+      const json = await api(LOGIN_FUNCTION_URL, { body: { username: username.trim(), password } });
+      if (!json.token || !json.admin) throw new ApiError("Unexpected response from the login service.", 500);
       onLoginSuccess(json.token, json.admin);
     } catch (err) {
+      setError(err.status === 0 ? "Network error reaching the login function. Try again." : (err.message || "Wrong username or password."));
       setLoading(false);
-      setError("Network error reaching the login function. Try again.");
     }
   }
 
@@ -240,23 +645,33 @@ function Login({ onLoginSuccess }) {
         <div style={s.loginBody}>
           <div style={s.brandRow}>
             <span style={s.brandGlyph}>◆</span>
-            <span style={s.brandName}>Verathis</span>
-            <span style={s.brandVersion}>Admin Console v1.4.2</span>
+            <span style={s.brandName}>Veyrathis</span>
+            <span style={s.brandVersion}>Admin Console v1.5.0</span>
           </div>
           <div style={s.loginPrompt}>Sign in with your operator account to continue.</div>
+          {notice && <div style={{ ...s.noteBox, marginBottom: 14 }} role="status">{notice}</div>}
           <form onSubmit={handleSubmit} style={s.form}>
             <label style={s.label}>
               User name
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={s.input} placeholder="operator id" autoComplete="username" />
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} required autoFocus style={s.input}
+                placeholder="operator id" autoComplete="username" disabled={loading} spellCheck={false} autoCapitalize="none" />
             </label>
             <label style={s.label}>
               Password
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={s.input} placeholder="••••••••" autoComplete="current-password" />
+              <div style={{ display: "flex", gap: 6 }}>
+                <input type={showPw ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
+                  style={{ ...s.input, flex: 1 }} placeholder="••••••••" autoComplete="current-password" disabled={loading}
+                  onKeyUp={e => setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))} />
+                <button type="button" style={s.secondaryButton} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>
+                  {showPw ? "Hide" : "Show"}
+                </button>
+              </div>
+              {capsOn && <span style={{ fontWeight: 400, color: "var(--xp-gold)" }}>Caps Lock is on.</span>}
             </label>
-            {error && <div style={s.errorBox}>⚠ {error}</div>}
+            {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
             <button type="submit" disabled={loading} style={s.primaryButton}>{loading ? "Signing in…" : "Sign In"}</button>
           </form>
-          <p style={s.footnote}>Accounts are provisioned manually by the project owner.</p>
+          <p style={s.footnote}>Accounts are provisioned by the project owner.</p>
         </div>
       </div>
     </div>
@@ -295,23 +710,7 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
     setLookingUp(true);
     setResult(null);
     try {
-      if (!token) {
-        setResult({ ok: false, message: "Your session expired — please sign in again." });
-        setLookingUp(false);
-        return;
-      }
-      const res = await fetch(ROBLOX_LOOKUP_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ username: robloxUsername.trim() }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        setResult({ ok: false, message: data.error || "Lookup failed." });
-        return;
-      }
-
+      const data = await api(ROBLOX_LOOKUP_URL, { token, body: { username: robloxUsername.trim() } });
       if (data && data.data && data.data.length) {
         setRobloxUserId(String(data.data[0].id));
         setResult({ ok: true, message: `Found: ${data.data[0].name} (UserId ${data.data[0].id})` });
@@ -319,7 +718,7 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
         setResult({ ok: false, message: "No Roblox user found with that username." });
       }
     } catch (err) {
-      setResult({ ok: false, message: "Lookup failed — Roblox API may be unreachable. You can still enter a UserId directly." });
+      setResult({ ok: false, message: err.status === 0 ? "Lookup failed — the lookup service may be unreachable. You can still enter a UserId directly." : err.message });
     } finally {
       setLookingUp(false);
     }
@@ -343,41 +742,25 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
 
     setSubmitting(true);
     try {
-      if (!token) {
-        setResult({ ok: false, message: "Your session expired — please sign in again." });
-        setSubmitting(false);
-        return;
-      }
-
-      const payload = { [selectedAction.field]: amountNum };
-
-      const res = await fetch(FUNCTION_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const json = await api(FUNCTION_URL, {
+        token,
+        body: {
           roblox_user_id: userId,
           roblox_username: robloxUsername.trim() || null,
           action_type: actionType,
-          payload,
+          payload: { [selectedAction.field]: amountNum },
           reason: reason.trim() || null,
-        }),
+        },
       });
-
-      const json = await res.json();
-
-      if (!res.ok || json.error) {
-        setResult({ ok: false, message: json.error || "Action failed for an unknown reason." });
-      } else {
-        const deliveryNote = json.delivery_method === "live"
-          ? "Delivered live — the player will see it within a couple seconds if online."
-          : "Player appears offline — queued, will apply on their next join.";
-        setResult({ ok: true, message: `${selectedAction.verb} → ${amountNum}. ${deliveryNote}` });
-        setAmount("");
-        setReason("");
-        if (onActionComplete) onActionComplete();
-      }
+      const deliveryNote = json.delivery_method === "live"
+        ? "Delivered live — the player will see it within a couple seconds if online."
+        : "Player appears offline — queued, will apply on their next join.";
+      setResult({ ok: true, message: `${selectedAction.verb} → ${amountNum}. ${deliveryNote}` });
+      setAmount("");
+      setReason("");
+      if (onActionComplete) onActionComplete();
     } catch (err) {
-      setResult({ ok: false, message: "Network error reaching the admin function. Check your connection and try again." });
+      setResult({ ok: false, message: err.message });
     } finally {
       setSubmitting(false);
     }
@@ -407,7 +790,7 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
         <input type="text" placeholder="Reason (optional, shown in audit log)" value={reason} onChange={e => setReason(e.target.value)} style={s.input} />
       </fieldset>
 
-      {result && <div style={result.ok ? s.resultOk : s.resultError}>{result.ok ? "✓" : "⚠"} {result.message}</div>}
+      {result && <div style={result.ok ? s.resultOk : s.resultError} role="status">{result.ok ? "✓" : "⚠"} {result.message}</div>}
 
       <button type="submit" disabled={submitting} style={s.primaryButton}>
         {submitting ? "Sending…" : selectedAction.verb}
@@ -417,7 +800,7 @@ function ActionForm({ onActionComplete, token, prefillUserId, prefillUsername })
 }
 
 // =========================================================
-// Action History — styled as the classic Windows Explorer list
+// Action History
 // =========================================================
 const STATUS_STYLES = {
   pending: { color: "var(--xp-gold)", label: "PENDING" },
@@ -442,18 +825,11 @@ function ActionHistory({ refreshSignal, token }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(LIST_ACTIONS_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        setError(json.error || "Failed to load history.");
-      } else {
-        setRows(json.actions || []);
-        setError(null);
-      }
+      const json = await api(LIST_ACTIONS_URL, { token });
+      setRows(json.actions || []);
+      setError(null);
     } catch (err) {
-      setError("Network error loading history.");
+      setError(err.message);
     }
     setLoading(false);
   }, [token]);
@@ -475,7 +851,7 @@ function ActionHistory({ refreshSignal, token }) {
           <span style={s.panelBarPath}>Admin Actions Log</span>
         </span>
         <span style={s.winBtnRow}>
-          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh">⟳</button>
+          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
         </span>
       </div>
       <div style={s.panelBody}>
@@ -512,22 +888,23 @@ function ActionHistory({ refreshSignal, token }) {
 }
 
 // =========================================================
-// Activity Log — audit trail of what each admin did in the
-// console itself (logins, searches, tab switches, edits),
-// distinct from Admin Actions Log above which tracks effects
-// applied to players (credits/XP/items). Reads from a new
-// admin_activity_log table via a new edge function — see the
-// Supabase setup notes at the end of this file.
+// Activity Log — audit trail of what each admin did in the console.
+// Event types match what the edge functions actually write.
 // =========================================================
 const ACTIVITY_EVENT_LABELS = {
   login: "Signed in",
   logout: "Signed out",
   view_tab: "Opened tab",
-    mod_lookup: "Looked up moderation record",
+  mod_lookup: "Looked up moderation record",
   player_search: "Searched player",
-  credits_action: "Set credits / XP",
-  inventory_grant: "Granted item",
-  inventory_remove: "Removed item",
+  set_credits: "Set credits",
+  add_credits: "Adjusted credits",
+  set_xp: "Set XP",
+  add_xp: "Granted XP",
+  add_item: "Granted item",
+  remove_item: "Removed item",
+  staff_create: "Created staff account",
+  staff_delete: "Deleted staff account",
 };
 
 function ActivityLog({ token }) {
@@ -535,34 +912,28 @@ function ActivityLog({ token }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [adminFilter, setAdminFilter] = useState("all");
+  const [eventFilter, setEventFilter] = useState("all");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(LIST_ACTIVITY_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        setError(json.error || "Failed to load activity log.");
-      } else {
-        setRows(json.activity || []);
-        setError(null);
-      }
+      const json = await api(LIST_ACTIVITY_URL, { token });
+      setRows(json.activity || []);
+      setError(null);
     } catch (err) {
-      setError("Network error loading activity log. This endpoint may not be set up yet — see setup notes.");
+      setError(err.message);
     }
     setLoading(false);
   }, [token]);
 
   useEffect(() => { if (token) load(); }, [load, token]);
 
-  const admins = useMemo(() => {
-    const set = new Set(rows.map(r => r.admin_username).filter(Boolean));
-    return Array.from(set).sort();
-  }, [rows]);
+  const admins = useMemo(() => Array.from(new Set(rows.map(r => r.admin_username).filter(Boolean))).sort(), [rows]);
+  const events = useMemo(() => Array.from(new Set(rows.map(r => r.event_type).filter(Boolean))).sort(), [rows]);
 
-  const filteredRows = adminFilter === "all" ? rows : rows.filter(r => r.admin_username === adminFilter);
+  const filteredRows = rows.filter(r =>
+    (adminFilter === "all" || r.admin_username === adminFilter) &&
+    (eventFilter === "all" || r.event_type === eventFilter));
 
   return (
     <div style={s.panelBox}>
@@ -571,26 +942,31 @@ function ActivityLog({ token }) {
           <span style={s.panelBarPath}>Activity Log</span>
         </span>
         <span style={s.winBtnRow}>
-          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh">⟳</button>
+          <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
         </span>
       </div>
       <div style={s.panelBody}>
-        <div style={{ ...s.row, marginBottom: 14, alignItems: "center" }}>
-          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }}>Admin</label>
-          <select value={adminFilter} onChange={e => setAdminFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 200px" }}>
+        <div style={{ ...s.row, marginBottom: 14, alignItems: "center", flexWrap: "wrap" }}>
+          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="act-admin">Admin</label>
+          <select id="act-admin" value={adminFilter} onChange={e => setAdminFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 170px" }}>
             <option value="all">All admins</option>
             {admins.map(name => <option key={name} value={name}>{name}</option>)}
+          </select>
+          <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="act-event">Event</label>
+          <select id="act-event" value={eventFilter} onChange={e => setEventFilter(e.target.value)} style={{ ...s.input, width: "auto", flex: "0 0 190px" }}>
+            <option value="all">All events</option>
+            {events.map(ev => <option key={ev} value={ev}>{ACTIVITY_EVENT_LABELS[ev] || ev}</option>)}
           </select>
         </div>
 
         {error && <div style={s.errorBox}>⚠ {error}</div>}
         {!error && filteredRows.length === 0 && !loading && (
-          <div style={s.empty}>No activity logged yet. Actions taken in this console will appear here.</div>
+          <div style={s.empty}>No activity matches. Actions taken in this console appear here.</div>
         )}
 
         <div style={s.listHeaderRow}>
-          <span style={{ flexBasis: 66, flexShrink: 0 }}>Time</span>
-          <span style={{ flexBasis: 110, flexShrink: 0 }}>Admin</span>
+          <span style={{ flex: "0 0 124px" }}>Time</span>
+          <span style={{ flex: "0 0 110px" }}>Admin</span>
           <span style={{ flex: 1 }}>Event</span>
           <span style={{ flexBasis: 140, flexShrink: 0 }}>Target</span>
         </div>
@@ -601,8 +977,8 @@ function ActivityLog({ token }) {
             });
             return (
               <div key={row.id} style={{ ...s.logLine, background: i % 2 === 0 ? "var(--xp-window-light)" : "transparent" }}>
-                <span style={s.logTime}>{time}</span>
-                <span style={{ ...s.logPlayer, flexBasis: 110, flexShrink: 0, flex: "0 0 110px" }}>{row.admin_username || "unknown"}</span>
+                <span style={{ ...s.logTime, flex: "0 0 124px" }}>{time}</span>
+                <span style={{ ...s.logPlayer, flex: "0 0 110px" }}>{row.admin_username || "unknown"}</span>
                 <span style={{ ...s.logAction, flex: 1, flexBasis: "auto" }}>{ACTIVITY_EVENT_LABELS[row.event_type] || row.event_type}</span>
                 <span style={s.logDelivery}>{row.target || "—"}</span>
                 {row.detail && <span style={s.logReason}>{row.detail}</span>}
@@ -651,8 +1027,7 @@ const INVENTORY_CATEGORIES = [
   { key: "Items", label: "Items" },
 ];
 
-// Groups a flat array of item-name strings (one entry per copy held,
-// matching how profile.Inventory is actually stored — see InventoryHandler.lua)
+// Groups a flat array of item-name strings (one entry per copy held)
 // into { name, count } pairs for display.
 function groupItemCounts(items) {
   const list = Array.isArray(items) ? items : [];
@@ -664,9 +1039,6 @@ function groupItemCounts(items) {
   return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
 }
 
-// One held-item row: shows name + count on file, a quantity stepper capped
-// to what's actually held, and a Remove button. Quantity defaults to 1 so
-// a misclick can't nuke a whole stack.
 function HeldItemRow({ name, count, category, onRemove, busy }) {
   const [qty, setQty] = useState(1);
 
@@ -679,31 +1051,15 @@ function HeldItemRow({ name, count, category, onRemove, busy }) {
     <div style={pd.heldRow}>
       <span style={pd.heldName}>{name}</span>
       <span style={pd.heldCount}>×{count}</span>
-      <input
-        type="number"
-        min={1}
-        max={count}
-        value={qty}
-        onChange={e => setQty(clampQty(e.target.value))}
-        style={pd.heldQtyInput}
-        disabled={busy}
-      />
-      <button
-        type="button"
-        onClick={() => onRemove(name, category, qty)}
-        disabled={busy}
-        style={pd.heldRemoveBtn}
-      >
+      <input type="number" min={1} max={count} value={qty} onChange={e => setQty(clampQty(e.target.value))}
+        style={pd.heldQtyInput} disabled={busy} aria-label={`Quantity of ${name} to remove`} />
+      <button type="button" onClick={() => onRemove(name, category, qty)} disabled={busy} style={pd.heldRemoveBtn}>
         {busy ? "…" : "Remove"}
       </button>
     </div>
   );
 }
 
-// Add-item picker for one category: item dropdown + quantity + Grant button.
-// Only items NOT already held (or held, since re-granting more copies is
-// valid) are listed — full catalogue is always offered, since granting a
-// second copy of something already held is a normal admin action.
 function AddItemRow({ category, onAdd, busy }) {
   const itemsInCategory = ITEM_DATABASE[category] || [];
   const [itemName, setItemName] = useState(itemsInCategory[0] || "");
@@ -719,24 +1075,13 @@ function AddItemRow({ category, onAdd, busy }) {
 
   return (
     <div style={pd.addRow}>
-      <select value={itemName} onChange={e => setItemName(e.target.value)} style={pd.addSelect} disabled={busy}>
+      <select value={itemName} onChange={e => setItemName(e.target.value)} style={pd.addSelect} disabled={busy} aria-label={`${category} item to grant`}>
         {itemsInCategory.map(name => <option key={name} value={name}>{name}</option>)}
       </select>
-      <input
-        type="number"
-        min={1}
-        max={100}
-        value={qty}
+      <input type="number" min={1} max={100} value={qty}
         onChange={e => setQty(Math.max(1, Math.min(100, Math.floor(Number(e.target.value) || 1))))}
-        style={pd.heldQtyInput}
-        disabled={busy}
-      />
-      <button
-        type="button"
-        onClick={() => onAdd(itemName, category, qty)}
-        disabled={busy || !itemName}
-        style={pd.addBtn}
-      >
+        style={pd.heldQtyInput} disabled={busy} aria-label="Quantity to grant" />
+      <button type="button" onClick={() => onAdd(itemName, category, qty)} disabled={busy || !itemName} style={pd.addBtn}>
         {busy ? "…" : "Grant"}
       </button>
     </div>
@@ -750,7 +1095,7 @@ function InventoryCategory({ label, category, items, onAdd, onRemove, busyKey })
 
   return (
     <div style={pd.invCategory}>
-      <button type="button" onClick={() => setOpen(o => !o)} style={pd.invCategoryHeader}>
+      <button type="button" onClick={() => setOpen(o => !o)} style={pd.invCategoryHeader} aria-expanded={open}>
         <span style={{ ...pd.invChevron, transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>▸</span>
         <span style={pd.invCategoryLabel}>{label}</span>
         <span style={pd.invCategoryCount}>{totalCount}</span>
@@ -760,14 +1105,8 @@ function InventoryCategory({ label, category, items, onAdd, onRemove, busyKey })
           {grouped.length > 0 ? (
             <div style={pd.heldList}>
               {grouped.map(g => (
-                <HeldItemRow
-                  key={g.name}
-                  name={g.name}
-                  count={g.count}
-                  category={category}
-                  onRemove={onRemove}
-                  busy={busyKey === `remove:${g.name}`}
-                />
+                <HeldItemRow key={g.name} name={g.name} count={g.count} category={category}
+                  onRemove={onRemove} busy={busyKey === `remove:${g.name}`} />
               ))}
             </div>
           ) : (
@@ -789,22 +1128,10 @@ function PersonnelDatabase({ token, onEditPlayer }) {
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [resolvedUsername, setResolvedUsername] = useState(null);
-  const [invBusyKey, setInvBusyKey] = useState(null); // e.g. "add:Weapons" or "remove:AK-47"
+  const [invBusyKey, setInvBusyKey] = useState(null);
   const [invError, setInvError] = useState(null);
 
-  // Pulled out of handleLookup so a silent refetch after an inventory
-  // mutation can reuse it without re-running the username→userId resolve
-  // step (we already know the numeric userId by that point).
-  async function fetchProfile(userId) {
-    const res = await fetch(PROFILE_LOOKUP_URL, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ roblox_user_id: Number(userId) }),
-    });
-    const json = await res.json();
-    if (!res.ok || json.error) throw new Error(json.error || "Lookup failed.");
-    return json;
-  }
+  const fetchProfile = (userId) => api(PROFILE_LOOKUP_URL, { token, body: { roblox_user_id: Number(userId) } });
 
   async function handleLookup(e) {
     e.preventDefault();
@@ -815,24 +1142,13 @@ function PersonnelDatabase({ token, onEditPlayer }) {
 
     setLookingUp(true);
     try {
-      if (!token) {
-        setError("Your session expired — please sign in again.");
-        setLookingUp(false);
-        return;
-      }
-
       let userId = query.trim();
       let usernameForDisplay = null;
 
       if (!/^\d+$/.test(userId)) {
-        const lookupRes = await fetch(ROBLOX_LOOKUP_URL, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ username: userId }),
-        });
-        const lookupJson = await lookupRes.json();
-        if (!lookupRes.ok || lookupJson.error || !lookupJson.data?.length) {
-          setError(lookupJson.error || "No Roblox user found with that username.");
+        const lookupJson = await api(ROBLOX_LOOKUP_URL, { token, body: { username: userId } });
+        if (!lookupJson.data?.length) {
+          setError("No Roblox user found with that username.");
           setLookingUp(false);
           return;
         }
@@ -850,37 +1166,25 @@ function PersonnelDatabase({ token, onEditPlayer }) {
     }
   }
 
-  // Shared submit path for both grant and remove — the only difference is
-  // action_type and which busy-key covers the affected row/section so the
-  // rest of the dossier stays interactive while one request is in flight.
   async function submitInventoryAction(actionType, itemName, category, quantity, busyKey) {
     if (!token || !profile) return;
     setInvBusyKey(busyKey);
     setInvError(null);
     try {
-      const res = await fetch(INVENTORY_ACTION_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await api(INVENTORY_ACTION_URL, {
+        token,
+        body: {
           roblox_user_id: profile.roblox_user_id,
           roblox_username: resolvedUsername || null,
           action_type: actionType,
           payload: { itemName, category, quantity },
-        }),
+        },
       });
-      const json = await res.json();
-      if (!res.ok || json.error) {
-        setInvError(json.error || "Inventory action failed.");
-        return;
-      }
-      // Refetch so the dossier reflects the real post-action state rather
-      // than an optimistic local guess — matters here because add/remove
-      // apply live in-game (or queue if offline), so the source of truth
-      // is the next ProfileStore read, not anything we can compute client-side.
+      // Refetch so the dossier shows the real post-action state.
       const refreshed = await fetchProfile(profile.roblox_user_id);
       setProfile(refreshed);
     } catch (err) {
-      setInvError("Network error reaching the inventory function.");
+      setInvError(err.message || "Inventory action failed.");
     } finally {
       setInvBusyKey(null);
     }
@@ -894,19 +1198,14 @@ function PersonnelDatabase({ token, onEditPlayer }) {
   return (
     <div style={pd.wrap}>
       <form onSubmit={handleLookup} style={pd.searchRow}>
-        <input
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search by Roblox UserId or username"
-          style={{ ...s.input, flex: 1 }}
-        />
+        <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+          placeholder="Search by Roblox UserId or username" style={{ ...s.input, flex: 1 }} />
         <button type="submit" disabled={lookingUp || !query.trim()} style={s.primaryButton}>
           {lookingUp ? "Searching…" : "Search"}
         </button>
       </form>
 
-      {error && <div style={s.errorBox}>⚠ {error}</div>}
+      {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
 
       {!profile && !error && !lookingUp && (
         <div style={pd.emptyState}>
@@ -944,15 +1243,11 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
         <span style={{ ...pd.liveDot, ...(found ? {} : { background: "var(--xp-red)" }) }}></span>
       </div>
 
-      <div style={pd.dossierBody}>
+      <div style={pd.dossierBody} className="vey-dossier-body">
         <div style={pd.portraitCol}>
           <div style={pd.portraitFrame}>
-            <img
-              src={avatarHeadshotUrl(profile.roblox_user_id)}
-              alt={displayName}
-              style={pd.portraitImg}
-              onError={(e) => { e.target.style.opacity = 0.15; }}
-            />
+            <img src={avatarHeadshotUrl(profile.roblox_user_id)} alt={displayName} style={pd.portraitImg}
+              onError={(e) => { e.target.style.opacity = 0.15; }} />
           </div>
           <div style={{ ...pd.clearanceTag, ...(found ? {} : { color: "var(--xp-red)", borderColor: "var(--xp-red)" }) }}>{clearance}</div>
         </div>
@@ -976,7 +1271,7 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
           {found && (
             <React.Fragment>
               <div style={pd.hairline}></div>
-              <div style={pd.statGrid}>
+              <div style={pd.statGrid} className="vey-stat-grid">
                 <div style={pd.statCell}>
                   <div style={pd.statLabel}>First joined</div>
                   <div style={pd.statValue}>{formatJoinDate(profile.first_joined)}</div>
@@ -1019,18 +1314,12 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
       {found && (
         <React.Fragment>
           <div style={pd.sectionDivider}>Inventory</div>
-          {invError && <div style={{ ...s.errorBox, margin: "0 18px 10px" }}>⚠ {invError}</div>}
+          {invError && <div style={{ ...s.errorBox, margin: "0 18px 10px" }} role="alert">⚠ {invError}</div>}
           <div style={pd.inventoryWrap}>
             {INVENTORY_CATEGORIES.map(cat => (
-              <InventoryCategory
-                key={cat.key}
-                label={cat.label}
-                category={cat.key}
+              <InventoryCategory key={cat.key} label={cat.label} category={cat.key}
                 items={profile.inventory ? profile.inventory[cat.key] : []}
-                onAdd={onAddItem}
-                onRemove={onRemoveItem}
-                busyKey={invBusyKey}
-              />
+                onAdd={onAddItem} onRemove={onRemoveItem} busyKey={invBusyKey} />
             ))}
           </div>
 
@@ -1065,9 +1354,10 @@ function ProfileDossier({ profile, username, onEdit, onAddItem, onRemoveItem, in
     </div>
   );
 }
+
 // =========================================================
-// Moderation — look up a player's warns / strikes / kicks / bans.
-// Reads mod_incidents (the same rows the Discord webhook mirrors).
+// Moderation — warns / strikes / kicks / bans from mod_incidents.
+// Available to every console role.
 // =========================================================
 const MOD_TYPE_STYLES = {
   WARN:   { color: "#8A6412", bg: "#FBF1CF" },
@@ -1087,16 +1377,8 @@ function formatModDuration(sec) {
   return [d && `${d}d`, h && `${h}h`, m && `${m}m`].filter(Boolean).join(" ") || `${sec}s`;
 }
 
-async function fetchModIncidents(token, userId) {
-  const res = await fetch(LIST_MOD_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(userId ? { roblox_user_id: Number(userId) } : {}),
-  });
-  const json = await res.json();
-  if (!res.ok || json.error) throw new Error(json.error || "Lookup failed.");
-  return json;
-}
+const fetchModIncidents = (token, userId) =>
+  api(LIST_MOD_URL, { token, body: userId ? { roblox_user_id: Number(userId) } : {} });
 
 function ModerationPanel({ token }) {
   const [query, setQuery] = useState("");
@@ -1104,34 +1386,41 @@ function ModerationPanel({ token }) {
   const [error, setError] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [summary, setSummary] = useState(null);
-  const [subject, setSubject] = useState(null); // { userId, name } while viewing one player
+  const [subject, setSubject] = useState(null);
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const reqRef = useRef(0); // ignore responses from superseded requests
 
   const loadFeed = useCallback(async () => {
+    const id = ++reqRef.current;
     setLoading(true); setError(null); setSubject(null); setSummary(null); setTypeFilter("ALL");
     try {
       const json = await fetchModIncidents(token, null);
+      if (id !== reqRef.current) return;
       setIncidents(json.incidents || []);
     } catch (err) {
+      if (id !== reqRef.current) return;
       setError(err.message || "Network error loading moderation records.");
     } finally {
-      setLoading(false);
+      if (id === reqRef.current) setLoading(false);
     }
   }, [token]);
 
   useEffect(() => { if (token) loadFeed(); }, [loadFeed, token]);
 
   async function openPlayer(userId, name) {
+    const id = ++reqRef.current;
     setLoading(true); setError(null); setTypeFilter("ALL");
     try {
       const json = await fetchModIncidents(token, userId);
+      if (id !== reqRef.current) return;
       setIncidents(json.incidents || []);
       setSummary(json.summary || null);
       setSubject({ userId: String(userId), name: name || null });
     } catch (err) {
+      if (id !== reqRef.current) return;
       setError(err.message || "Network error loading moderation records.");
     } finally {
-      setLoading(false);
+      if (id === reqRef.current) setLoading(false);
     }
   }
 
@@ -1143,20 +1432,15 @@ function ModerationPanel({ token }) {
 
     setLoading(true); setError(null);
     try {
-      const res = await fetch(ROBLOX_LOOKUP_URL, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ username: q }),
-      });
-      const j = await res.json();
-      if (!res.ok || j.error || !j.data?.length) {
-        setError(j.error || "No Roblox user found with that username.");
+      const j = await api(ROBLOX_LOOKUP_URL, { token, body: { username: q } });
+      if (!j.data?.length) {
+        setError("No Roblox user found with that username.");
         setLoading(false);
         return;
       }
       await openPlayer(j.data[0].id, j.data[0].name);
     } catch (err) {
-      setError("Network error resolving that username.");
+      setError(err.status === 0 ? "Network error resolving that username." : err.message);
       setLoading(false);
     }
   }
@@ -1188,7 +1472,7 @@ function ModerationPanel({ token }) {
         {subject && <button type="button" onClick={loadFeed} style={s.secondaryButton}>Recent</button>}
       </form>
 
-      {error && <div style={s.errorBox}>⚠ {error}</div>}
+      {error && <div style={s.errorBox} role="alert">⚠ {error}</div>}
 
       {subject && summary && (
         <div style={md.summaryBox}>
@@ -1219,13 +1503,13 @@ function ModerationPanel({ token }) {
           </span>
           <span style={s.winBtnRow}>
             <button onClick={() => (subject ? openPlayer(subject.userId, subject.name) : loadFeed())}
-              style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh">⟳</button>
+              style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
           </span>
         </div>
         <div style={s.panelBody}>
           <div style={{ ...s.row, marginBottom: 12, alignItems: "center" }}>
-            <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }}>Type</label>
-            <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+            <label style={{ fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 }} htmlFor="mod-type">Type</label>
+            <select id="mod-type" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
               style={{ ...s.input, width: "auto", flex: "0 0 160px" }}>
               <option value="ALL">All types</option>
               {MOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1275,91 +1559,413 @@ function ModerationPanel({ token }) {
   );
 }
 
-const md = {
-  wrap: { display: "flex", flexDirection: "column", gap: 14, padding: "16px 20px 30px", maxWidth: 900 },
-  searchRow: { display: "flex", gap: 8, alignItems: "center" },
-  summaryBox: {
-    display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", padding: 14,
-    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
-    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
-  },
-  portrait: { width: 64, height: 64, objectFit: "cover", border: "2px solid #A99060", borderRadius: 2, background: "var(--xp-field)" },
-  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
-  chip: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "2px 8px" },
-  list: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 560, overflowY: "auto" },
-  card: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)", padding: "9px 11px", display: "flex", flexDirection: "column", gap: 5 },
-  cardTop: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
-  badge: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "1px 8px" },
-  incId: { fontSize: 11, color: "var(--xp-text-dim)", fontFamily: "monospace" },
-  time: { fontSize: 10.5, color: "var(--xp-text-faint)", marginLeft: "auto" },
-  target: { fontSize: 12, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" },
-  dim: { color: "var(--xp-text-faint)" },
-  linkBtn: { background: "transparent", border: "none", color: "var(--xp-text-link)", textDecoration: "underline", fontSize: 11, padding: "0 6px" },
-  reason: { fontSize: 12.5, color: "var(--xp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
-  meta: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "var(--xp-text-dim)" },
-  notes: { fontSize: 11, color: "var(--xp-text-faint)", fontStyle: "italic", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+// =========================================================
+// Staff Management — owner only. Create and delete console accounts
+// (rows in admin_logins) through the admin-staff-manage edge function.
+// =========================================================
+const STAFF_ROLE_OPTIONS = [
+  { value: "game_moderator", label: "Game Moderator" },
+  { value: "database_moderator", label: "Database Moderator" },
+  { value: "owner", label: "Owner" },
+];
+const ROLE_BADGE = {
+  owner: { color: "#8A6412", bg: "#FBF1CF" },
+  database_moderator: { color: "#2C5F8A", bg: "#E1EDF7" },
+  game_moderator: { color: "#2E7D2E", bg: "#E6F2E6" },
 };
+const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
+
+// Unbiased random password from an unambiguous alphabet (no 0/O, 1/l/I).
+function generatePassword(length = 16) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const limit = 4294967296 - (4294967296 % chars.length);
+  let out = "";
+  while (out.length < length) {
+    const buf = new Uint32Array(length);
+    crypto.getRandomValues(buf);
+    for (const n of buf) {
+      if (n < limit && out.length < length) out += chars[n % chars.length];
+    }
+  }
+  return out;
+}
+
+function ConfirmDialog({ title, children, confirmWord, confirmLabel, busy, error, onCancel, onConfirm }) {
+  const [typed, setTyped] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+    function onKey(e) { if (e.key === "Escape" && !busy) onCancel(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy, onCancel]);
+
+  const ready = typed === confirmWord;
+
+  return (
+    <div style={st.backdrop} onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel(); }}>
+      <div style={st.dialog} role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+        <div style={st.dialogBar}><span id="dlg-title">{title}</span></div>
+        <div style={st.dialogBody}>
+          {children}
+          <label style={{ ...s.label, marginTop: 14 }}>
+            Type <b style={{ color: "var(--xp-red)" }}>{confirmWord}</b> to confirm
+            <input ref={inputRef} type="text" value={typed} onChange={e => setTyped(e.target.value)} style={s.input}
+              autoComplete="off" spellCheck={false} disabled={busy}
+              onKeyDown={e => { if (e.key === "Enter" && ready && !busy) { e.preventDefault(); onConfirm(); } }} />
+          </label>
+          {error && <div style={{ ...s.errorBox, marginTop: 12 }} role="alert">⚠ {error}</div>}
+          <div style={st.dialogFooter}>
+            <button type="button" style={s.secondaryButton} onClick={onCancel} disabled={busy}>Cancel</button>
+            <button type="button" style={{ ...s.primaryButtonDanger, opacity: ready ? 1 : 0.5 }} onClick={onConfirm} disabled={!ready || busy}>
+              {busy ? "Deleting…" : confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StaffManagement({ token }) {
+  const [staff, setStaff] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  const [form, setForm] = useState({ username: "", password: "", role: "game_moderator" });
+  const [showPw, setShowPw] = useState(false);
+  const [ownerAck, setOwnerAck] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [created, setCreated] = useState(null);
+  const [copied, setCopied] = useState(null);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [flash, setFlash] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const json = await api(STAFF_URL, { token, body: { action: "list" } });
+      setStaff(json.staff || []);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(
+        err.status === 0 || err.status === 404
+          ? "Couldn't reach the staff service. If the admin-staff-manage edge function isn't deployed yet, deploy it in Supabase and refresh."
+          : err.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { if (token) load(); }, [load, token]);
+
+  useEffect(() => {
+    if (!flash) return;
+    const id = setTimeout(() => setFlash(null), 5000);
+    return () => clearTimeout(id);
+  }, [flash]);
+
+  const counts = useMemo(() => {
+    const c = { owner: 0, database_moderator: 0, game_moderator: 0 };
+    for (const m of staff) if (m.role in c) c[m.role]++;
+    return c;
+  }, [staff]);
+
+  function setField(key, value) {
+    setForm(f => ({ ...f, [key]: value }));
+    if (key === "role") setOwnerAck(false);
+  }
+
+  async function copyText(text, key) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(c => (c === key ? null : c)), 1800);
+    } catch (_e) {
+      setCopied("error");
+    }
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault();
+    setFormError(null);
+    setCreated(null);
+
+    const username = form.username.trim();
+    if (!USERNAME_RE.test(username)) {
+      setFormError("Username must be 3–32 characters: letters, numbers, dot, dash or underscore.");
+      return;
+    }
+    if (form.password.length < 10) {
+      setFormError("Password must be at least 10 characters. Use Generate for a strong one.");
+      return;
+    }
+    if (form.role === "owner" && !ownerAck) {
+      setFormError("Confirm that this account should have full owner access.");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      await api(STAFF_URL, { token, body: { action: "create", username, password: form.password, role: form.role } });
+      setCreated({ username, role: form.role, password: form.password });
+      setForm({ username: "", password: "", role: "game_moderator" });
+      setOwnerAck(false);
+      setShowPw(false);
+      await load();
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api(STAFF_URL, { token, body: { action: "delete", id: deleteTarget.id } });
+      setFlash(`Deleted ${deleteTarget.username}. Any open sessions were signed out.`);
+      setDeleteTarget(null);
+      await load();
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const roleInfo = ROLES[form.role];
+
+  return (
+    <div style={st.layout} className="vey-grid">
+      {/* ---------- create account ---------- */}
+      <div style={s.panelBox}>
+        <div style={s.panelBar}>
+          <span style={s.panelBarLeft}><span>Create account</span></span>
+          <span style={s.panelBarTag}>Owner</span>
+        </div>
+        <div style={s.panelBody}>
+          <form onSubmit={handleCreate} style={s.form} autoComplete="off">
+            <fieldset style={s.fieldset}>
+              <legend style={s.legend}>Credentials</legend>
+              <input type="text" placeholder="Username" value={form.username} onChange={e => setField("username", e.target.value)}
+                required style={s.input} autoComplete="off" spellCheck={false} autoCapitalize="none" disabled={creating} aria-label="Username" />
+              <div style={s.row}>
+                <input type={showPw ? "text" : "password"} placeholder="Password (10+ characters)" value={form.password}
+                  onChange={e => setField("password", e.target.value)} required style={{ ...s.input, flex: 1 }}
+                  autoComplete="new-password" disabled={creating} aria-label="Password" />
+                <button type="button" style={s.secondaryButton} onClick={() => setShowPw(v => !v)} aria-pressed={showPw}>{showPw ? "Hide" : "Show"}</button>
+              </div>
+              <button type="button" style={{ ...s.secondaryButton, height: 30 }} disabled={creating}
+                onClick={() => { setField("password", generatePassword(16)); setShowPw(true); }}>
+                Generate strong password
+              </button>
+            </fieldset>
+
+            <fieldset style={s.fieldset}>
+              <legend style={s.legend}>Role</legend>
+              <select value={form.role} onChange={e => setField("role", e.target.value)} style={s.input} disabled={creating} aria-label="Role">
+                {STAFF_ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <div style={st.roleBlurb}>{roleInfo ? roleInfo.blurb : ""}</div>
+              {form.role === "owner" && (
+                <label style={st.ackRow}>
+                  <input type="checkbox" checked={ownerAck} onChange={e => setOwnerAck(e.target.checked)} disabled={creating} />
+                  <span>This account gets full access, including creating and deleting staff.</span>
+                </label>
+              )}
+            </fieldset>
+
+            {formError && <div style={s.resultError} role="alert">⚠ {formError}</div>}
+
+            <button type="submit" disabled={creating} style={s.primaryButton}>
+              {creating ? "Creating…" : "Create account"}
+            </button>
+          </form>
+
+          {created && (
+            <div style={st.credCard} role="status">
+              <div style={st.credTitle}>✓ Account created</div>
+              <div style={st.credNote}>The password is shown here once. Send it to {created.username} through a private channel.</div>
+              <div style={st.credRow}><span style={st.credLabel}>Username</span><code style={st.credValue}>{created.username}</code>
+                <button type="button" style={st.credCopy} onClick={() => copyText(created.username, "u")}>{copied === "u" ? "Copied" : "Copy"}</button></div>
+              <div style={st.credRow}><span style={st.credLabel}>Password</span><code style={st.credValue}>{created.password}</code>
+                <button type="button" style={st.credCopy} onClick={() => copyText(created.password, "p")}>{copied === "p" ? "Copied" : "Copy"}</button></div>
+              <div style={st.credRow}><span style={st.credLabel}>Role</span><span style={st.credValue}>{roleLabel(created.role)}</span></div>
+              {copied === "error" && <div style={{ ...st.credNote, color: "var(--xp-red)" }}>Couldn't access the clipboard. Select the text and copy it manually.</div>}
+              <button type="button" style={{ ...s.secondaryButton, marginTop: 10, height: 28 }} onClick={() => setCreated(null)}>Dismiss</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ---------- accounts list ---------- */}
+      <div style={s.panelBox}>
+        <div style={s.panelBar}>
+          <span style={s.panelBarLeft}><span>Accounts</span></span>
+          <span style={s.winBtnRow}>
+            <button onClick={load} style={{ ...s.winBtn, cursor: "pointer" }} disabled={loading} title="Refresh" aria-label="Refresh">⟳</button>
+          </span>
+        </div>
+        <div style={s.panelBody}>
+          <div style={st.chipRow}>
+            {STAFF_ROLE_OPTIONS.slice().reverse().map(o => (
+              <span key={o.value} style={{ ...md.chip, color: ROLE_BADGE[o.value].color, background: ROLE_BADGE[o.value].bg, borderColor: ROLE_BADGE[o.value].color }}>
+                {o.label} · {counts[o.value]}
+              </span>
+            ))}
+          </div>
+
+          {flash && <div style={{ ...s.resultOk, marginBottom: 12 }} role="status">✓ {flash}</div>}
+          {loadError && <div style={s.errorBox} role="alert">⚠ {loadError}</div>}
+          {!loadError && !loading && staff.length === 0 && <div style={s.empty}>No accounts found.</div>}
+
+          <div style={st.list}>
+            {staff.map(m => {
+              const badge = ROLE_BADGE[m.role] || { color: "var(--xp-text-dim)", bg: "var(--xp-window-light)" };
+              return (
+                <div key={m.id} style={st.item}>
+                  <div style={st.itemMain}>
+                    <div style={st.itemName}>
+                      {m.username}
+                      {m.is_you && <span style={st.youTag}>You</span>}
+                    </div>
+                    <div style={st.itemSub}>
+                      Created {formatDateTime(m.created_at)}
+                    </div>
+                  </div>
+                  <span style={{ ...md.badge, color: badge.color, background: badge.bg, borderColor: badge.color, whiteSpace: "nowrap" }}>{roleLabel(m.role)}</span>
+                  <div style={st.itemMeta}>
+                    <div>Last sign-in: <b>{relativeTime(m.last_login)}</b></div>
+                    <div>{m.active_sessions > 0 ? <span style={{ color: "var(--xp-green)" }}>● {m.active_sessions} active session{m.active_sessions === 1 ? "" : "s"}</span> : "No active sessions"}</div>
+                  </div>
+                  <button type="button" style={{ ...s.primaryButtonDanger, padding: "5px 12px", fontSize: 11 }}
+                    disabled={m.is_you} title={m.is_you ? "You can't delete your own account" : `Delete ${m.username}`}
+                    onClick={() => { setDeleteError(null); setDeleteTarget(m); }}>
+                    Delete
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete staff account"
+          confirmWord={deleteTarget.username}
+          confirmLabel="Delete account"
+          busy={deleting}
+          error={deleteError}
+          onCancel={() => { if (!deleting) setDeleteTarget(null); }}
+          onConfirm={confirmDelete}
+        >
+          <p style={{ margin: 0, lineHeight: 1.55 }}>
+            This permanently deletes <b>{deleteTarget.username}</b> ({roleLabel(deleteTarget.role)}) and signs out any open sessions.
+            Their past activity stays in the Activity Log.
+          </p>
+        </ConfirmDialog>
+      )}
+    </div>
+  );
+}
+
+const st = {
+  layout: { display: "grid", gridTemplateColumns: "minmax(300px, 380px) 1fr", gap: 16, padding: "16px 20px 30px", maxWidth: 1180, alignItems: "start" },
+  roleBlurb: { fontSize: 11, color: "var(--xp-text-faint)", padding: "0 2px" },
+  ackRow: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 11.5, color: "var(--xp-red)", background: "var(--xp-red-dim)", border: "1px solid #E3A79E", borderRadius: 2, padding: "7px 9px" },
+
+  credCard: { marginTop: 16, border: "1px solid #9FCB9F", background: "var(--xp-green-dim)", borderRadius: 3, padding: "11px 12px", animation: "fade-in 0.2s ease-out" },
+  credTitle: { fontWeight: 700, color: "#1F5F1F", marginBottom: 4 },
+  credNote: { fontSize: 11, color: "var(--xp-text-dim)", marginBottom: 8, lineHeight: 1.5 },
+  credRow: { display: "flex", alignItems: "center", gap: 8, padding: "4px 0", flexWrap: "wrap" },
+  credLabel: { width: 62, fontSize: 10.5, fontWeight: 700, color: "var(--xp-text-dim)" },
+  credValue: { flex: 1, fontFamily: "Consolas, 'Courier New', monospace", fontSize: 12, background: "var(--xp-field)", border: "1px solid var(--xp-bevel-shadow)", padding: "3px 7px", wordBreak: "break-all" },
+  credCopy: { background: "linear-gradient(180deg, #FCFCFC 0%, #ECE9D8 100%)", border: "1px solid var(--xp-bevel-dark)", borderRadius: 3, padding: "3px 10px", fontSize: 11 },
+
+  chipRow: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 },
+  list: { display: "flex", flexDirection: "column", gap: 8 },
+  item: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "10px 11px", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)" },
+  itemMain: { flex: "1 1 160px", minWidth: 0 },
+  itemName: { fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 8, wordBreak: "break-all" },
+  itemSub: { fontSize: 10.5, color: "var(--xp-text-faint)", marginTop: 2 },
+  youTag: { fontSize: 9.5, fontWeight: 700, color: "#4A3300", background: "linear-gradient(180deg, #FFF3C4, #FFE28A)", border: "1px solid #E8A100", borderRadius: 2, padding: "0 6px" },
+  itemMeta: { fontSize: 10.5, color: "var(--xp-text-dim)", lineHeight: 1.5, flex: "0 1 170px" },
+
+  backdrop: { position: "fixed", inset: 0, background: "rgba(20,16,6,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 500 },
+  dialog: { width: "100%", maxWidth: 420, background: "var(--xp-window)", border: "1px solid #5C4508", boxShadow: "3px 3px 0 rgba(0,0,0,0.3)", animation: "dialog-in 0.18s ease-out" },
+  dialogBar: {
+    padding: "5px 10px", color: "#fff", fontWeight: 700, fontSize: 12.5, fontFamily: "var(--sans-display)",
+    background: "linear-gradient(180deg, #C23A28 0%, #A02A1E 12%, #A02A1E 45%, #7E1E14 100%)",
+  },
+  dialogBody: { padding: 18 },
+  dialogFooter: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 16 },
+};
+
 // =========================================================
 // Sidebar nav
 // =========================================================
-const NAV_ITEMS = [
-  { key: "actions", label: "Actions" },
-  { key: "personnel", label: "Personnel" },
-    { key: "moderation", label: "Moderation" },
-  { key: "activity", label: "Activity Log" },
-];
-
-function Sidebar({ activeTab, setActiveTab, adminInfo, onSignOut }) {
+function Sidebar({ tabs, activeTab, setActiveTab, adminInfo, onSignOut }) {
   return (
-    <aside style={s.sidebar}>
+    <aside style={s.sidebar} className="vey-sidebar">
       <div style={s.sidebarBrand}>
         <span style={s.brandGlyph}>◆</span>
         <div>
           <div style={s.brandName}>Veyrathis</div>
-          <div style={s.brandVersion}>Admin Console v1.4.2</div>
+          <div style={s.brandVersion}>Admin Console v1.5.0</div>
         </div>
       </div>
 
       <div style={s.sidebarStatusLine}>
-        <span style={s.liveDotSmall}></span>
+        <span style={s.liveDotSmall} className="liveDotSmall"></span>
         <span>{adminInfo.username} — connected</span>
       </div>
 
       <div style={s.navGroupLabel}>Console</div>
-      <nav style={s.navList}>
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.key}
-            onClick={() => setActiveTab(item.key)}
+      <nav style={s.navList} className="vey-nav" aria-label="Console sections">
+        {NAV_ITEMS.filter(item => tabs.includes(item.key)).map(item => (
+          <button key={item.key} onClick={() => setActiveTab(item.key)}
             style={activeTab === item.key ? s.navItemActive : s.navItem}
-          >
+            aria-current={activeTab === item.key ? "page" : undefined}>
             {item.label}
           </button>
         ))}
       </nav>
 
-      <div style={s.sidebarFooter}>
-        <div style={s.whoami}>{adminInfo.username} · {adminInfo.role}</div>
-        <button onClick={onSignOut} style={s.secondaryButton}>Sign Out</button>
+      <div style={s.sidebarFooter} className="vey-sidebar-footer">
+        <div style={s.whoami}>{adminInfo.username} · {roleLabel(adminInfo.role)}</div>
+        <button onClick={() => onSignOut()} style={s.secondaryButton}>Sign Out</button>
       </div>
     </aside>
   );
 }
 
 // =========================================================
-// Top vitals strip — repurposed for real admin data
+// Top vitals strip
 // =========================================================
-function TopStrip({ pendingCount, lastSync, activeTab }) {
+function TopStrip({ pendingCount, lastSync, activeTab, showPending }) {
   const now = useClock();
- const titleMap = { actions: "Actions Overview", inventory: "Inventory Overview", personnel: "Personnel Overview", moderation: "Moderation Records", activity: "Activity Log" };
   return (
-    <div style={s.topStrip}>
+    <div style={s.topStrip} className="vey-top-strip">
       <div style={s.topStripLeft}>
-        <span style={s.topStripCmd}>{titleMap[activeTab] || "Dashboard"}</span>
+        <span style={s.topStripCmd}>{TAB_TITLES[activeTab] || "Dashboard"}</span>
       </div>
-      <div style={s.topStripRight}>
-        <span style={s.vital}><span style={s.vitalLabel}>Pending</span><span style={{ ...s.vitalValue, color: pendingCount > 0 ? "var(--xp-gold)" : "var(--xp-text-faint)" }}>{pendingCount}</span></span>
-        <span style={s.vital}><span style={s.vitalLabel}>Last sync</span><span style={s.vitalValue}>{lastSync}</span></span>
+      <div style={s.topStripRight} className="vey-top-right">
+        {showPending && (
+          <React.Fragment>
+            <span style={s.vital}><span style={s.vitalLabel}>Pending</span><span style={{ ...s.vitalValue, color: pendingCount > 0 ? "var(--xp-gold)" : "var(--xp-text-faint)" }}>{pendingCount}</span></span>
+            <span style={s.vital}><span style={s.vitalLabel}>Last sync</span><span style={s.vitalValue}>{lastSync}</span></span>
+          </React.Fragment>
+        )}
         <span style={s.vital}><span style={s.vitalValue}>{formatClock(now)}</span></span>
       </div>
     </div>
@@ -1369,66 +1975,89 @@ function TopStrip({ pendingCount, lastSync, activeTab }) {
 // =========================================================
 // App shell
 // =========================================================
+function readStored(key) {
+  try { return sessionStorage.getItem(key); } catch (_e) { return null; }
+}
+
 function App() {
-  const [token, setToken] = useState(() => sessionStorage.getItem("admin_token") || null);
+  const [token, setToken] = useState(() => readStored("admin_token"));
   const [adminInfo, setAdminInfo] = useState(() => {
-    const raw = sessionStorage.getItem("admin_info");
-    return raw ? JSON.parse(raw) : null;
+    try { const raw = readStored("admin_info"); return raw ? JSON.parse(raw) : null; } catch (_e) { return null; }
   });
+  const [notice, setNotice] = useState(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
-  const [activeTab, setActiveTab] = useState("actions");
+  const [requestedTab, setRequestedTab] = useState(null);
   const [prefill, setPrefill] = useState({ userId: "", username: "" });
   const [pendingCount, setPendingCount] = useState(0);
   const [lastSync, setLastSync] = useState("—");
 
+  // Tell the boot screen the interface is ready.
+  useEffect(() => { if (window.__veyBootReady) window.__veyBootReady(); }, []);
+
+  const allowedTabs = useMemo(() => tabsForRole(adminInfo && adminInfo.role), [adminInfo]);
+  const activeTab = allowedTabs.includes(requestedTab) ? requestedTab : (allowedTabs[0] || null);
+  const canSeeActions = allowedTabs.includes("actions");
+
   const handleLoginSuccess = useCallback((newToken, admin) => {
-    sessionStorage.setItem("admin_token", newToken);
-    sessionStorage.setItem("admin_info", JSON.stringify(admin));
+    try {
+      sessionStorage.setItem("admin_token", newToken);
+      sessionStorage.setItem("admin_info", JSON.stringify(admin));
+    } catch (_e) { /* storage unavailable — session lasts until reload */ }
+    setNotice(null);
+    setRequestedTab(null);
     setToken(newToken);
     setAdminInfo(admin);
   }, []);
 
-  const handleSignOut = useCallback(() => {
-    sessionStorage.removeItem("admin_token");
-    sessionStorage.removeItem("admin_info");
+  const handleSignOut = useCallback((message) => {
+    try {
+      sessionStorage.removeItem("admin_token");
+      sessionStorage.removeItem("admin_info");
+    } catch (_e) { /* ignore */ }
     setToken(null);
     setAdminInfo(null);
+    setRequestedTab(null);
+    setPrefill({ userId: "", username: "" });
+    setPendingCount(0);
+    setNotice(typeof message === "string" ? message : null);
   }, []);
+
+  // Any 401 from any endpoint signs the user out cleanly.
+  useEffect(() => {
+    unauthorizedHandler = () => handleSignOut("Your session expired. Sign in again to continue.");
+    return () => { unauthorizedHandler = null; };
+  }, [handleSignOut]);
 
   const handleEditFromProfile = useCallback(({ userId, username }) => {
     setPrefill({ userId, username });
-    setActiveTab("actions");
+    setRequestedTab("actions");
   }, []);
 
-  // Derive pending count + last-sync readout from the same history list
-  // used by ActionHistory, fetched independently so the top strip updates
-  // even before either tab's panel has mounted.
+  // Pending-count poll — only for roles that can see the Actions log.
   useEffect(() => {
-    if (!token) return;
+    if (!token || !canSeeActions) return;
     let cancelled = false;
     async function poll() {
       try {
-        const res = await fetch(LIST_ACTIONS_URL, { headers: { Authorization: `Bearer ${token}` } });
-        const json = await res.json();
+        const json = await api(LIST_ACTIONS_URL, { token });
         if (cancelled) return;
-        if (res.ok && json.actions) {
-          const pending = json.actions.filter(r => r.status === "pending" || r.status === "broadcast").length;
-          setPendingCount(pending);
+        if (json.actions) {
+          setPendingCount(json.actions.filter(r => r.status === "pending" || r.status === "broadcast").length);
         }
         setLastSync(new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
-      } catch (err) { /* silent — top strip is non-critical */ }
+      } catch (_err) { /* silent — top strip is non-critical */ }
     }
     poll();
     const id = setInterval(poll, 15000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [token, refreshSignal]);
+  }, [token, refreshSignal, canSeeActions]);
 
-  if (!token || !adminInfo) return <Login onLoginSuccess={handleLoginSuccess} />;
+  if (!token || !adminInfo) return <Login onLoginSuccess={handleLoginSuccess} notice={notice} />;
 
   return (
-    <div style={s.desktopWrap}>
-      <div style={s.shell}>
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} adminInfo={adminInfo} onSignOut={handleSignOut} />
+    <div style={s.desktopWrap} className="vey-desktop">
+      <div style={s.shell} className="vey-shell">
+        <Sidebar tabs={allowedTabs} activeTab={activeTab} setActiveTab={setRequestedTab} adminInfo={adminInfo} onSignOut={handleSignOut} />
 
         <div style={s.mainCol}>
           <div style={s.appTitleBar}>
@@ -1442,10 +2071,22 @@ function App() {
               <span style={{ ...s.winBtn, ...s.winBtnClose }}>×</span>
             </span>
           </div>
-          <TopStrip pendingCount={pendingCount} lastSync={lastSync} activeTab={activeTab} />
+          <TopStrip pendingCount={pendingCount} lastSync={lastSync} activeTab={activeTab} showPending={canSeeActions} />
+
+          {!activeTab && (
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 640 }} className="vey-grid">
+              <div style={s.panelBox}>
+                <div style={s.panelBar}><span style={s.panelBarLeft}><span>No access</span></span></div>
+                <div style={s.panelBody}>
+                  <div style={s.errorBox}>⚠ Your account role ({roleLabel(adminInfo.role)}) isn't assigned to any console section.</div>
+                  <p style={{ ...s.loginPrompt, marginTop: 12 }}>Ask an owner to update your role, then sign in again.</p>
+                </div>
+              </div>
+            </main>
+          )}
 
           {activeTab === "actions" && (
-            <main style={s.contentGrid}>
+            <main style={s.contentGrid} className="vey-grid">
               <div style={s.panelBox}>
                 <div style={s.panelBar}>
                   <span style={s.panelBarLeft}>
@@ -1454,12 +2095,8 @@ function App() {
                   <span style={s.panelBarTag}>Form</span>
                 </div>
                 <div style={s.panelBody}>
-                  <ActionForm
-                    token={token}
-                    onActionComplete={() => setRefreshSignal(n => n + 1)}
-                    prefillUserId={prefill.userId}
-                    prefillUsername={prefill.username}
-                  />
+                  <ActionForm token={token} onActionComplete={() => setRefreshSignal(n => n + 1)}
+                    prefillUserId={prefill.userId} prefillUsername={prefill.username} />
                 </div>
               </div>
               <ActionHistory token={token} refreshSignal={refreshSignal} />
@@ -1467,25 +2104,30 @@ function App() {
           )}
 
           {activeTab === "personnel" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 780 }}>
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 780 }} className="vey-grid">
               <PersonnelDatabase token={token} onEditPlayer={handleEditFromProfile} />
             </main>
           )}
           {activeTab === "moderation" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }}>
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }} className="vey-grid">
               <ModerationPanel token={token} />
             </main>
           )}
           {activeTab === "activity" && (
-            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }}>
+            <main style={{ ...s.contentGrid, gridTemplateColumns: "1fr", maxWidth: 900 }} className="vey-grid">
               <ActivityLog token={token} />
+            </main>
+          )}
+          {activeTab === "staff" && (
+            <main style={{ padding: 0 }}>
+              <StaffManagement token={token} />
             </main>
           )}
 
           <div style={s.statusBar}>
             <span style={s.statusBarCell}>Ready</span>
             <span style={{ ...s.statusBarCell, ...s.statusBarCellGrow }}></span>
-            <span style={s.statusBarCell}>{adminInfo.role}</span>
+            <span style={s.statusBarCell}>{roleLabel(adminInfo.role)}</span>
           </div>
         </div>
       </div>
@@ -1494,10 +2136,9 @@ function App() {
 }
 
 // =========================================================
-// Styles — Windows XP "Luna" beveled admin console
+// Styles — beveled admin console
 // =========================================================
 const s = {
-  // ---- desktop backdrop + window frame ----
   desktopWrap: { minHeight: "100vh", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "18px 16px 40px" },
   shell: {
     display: "flex", width: "100%", maxWidth: 1280,
@@ -1507,7 +2148,6 @@ const s = {
   },
   mainCol: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column" },
 
-  // ---- window title bar (top of the whole app) ----
   appTitleBar: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     padding: "4px 4px 4px 8px",
@@ -1518,7 +2158,6 @@ const s = {
   appTitleBarLeft: { display: "flex", alignItems: "center", gap: 7, letterSpacing: "0.01em" },
   appTitleBarIcon: { fontSize: 13, filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.3))" },
 
-  // ---- sidebar contents (styled as a browser task-pane) ----
   sidebar: {
     width: 208, flexShrink: 0,
     background: "linear-gradient(180deg, #FBFAF6 0%, #F3EFE3 4%, #EAE3CE 100%)",
@@ -1526,7 +2165,6 @@ const s = {
     padding: "12px 10px",
   },
 
-  // ---- sidebar contents ----
   sidebarBrand: { display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 12px" },
   brandGlyph: { color: "var(--xp-title-l)", fontSize: 17, lineHeight: 1 },
   brandName: { fontFamily: "var(--sans-display)", fontWeight: 700, fontSize: 14, color: "var(--xp-text)" },
@@ -1552,7 +2190,6 @@ const s = {
   sidebarFooter: { paddingTop: 12, borderTop: "1px solid #D9CFAE", display: "flex", flexDirection: "column", gap: 8 },
   whoami: { fontSize: 10.5, color: "var(--xp-text-dim)", padding: "0 2px" },
 
-  // ---- top strip ----
   topStrip: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     padding: "8px 20px", borderBottom: "1px solid var(--xp-bevel-shadow)",
@@ -1565,10 +2202,8 @@ const s = {
   vitalLabel: { color: "var(--xp-text-faint)" },
   vitalValue: { color: "var(--xp-text-dim)", fontWeight: 700 },
 
-  // ---- content grid ----
   contentGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: "16px 20px 30px", maxWidth: 1100, alignItems: "start" },
 
-  // ---- panel chrome (each panel is its own little window) ----
   panelBox: {
     background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
     overflow: "hidden", animation: "fade-in 0.2s ease-out",
@@ -1586,7 +2221,6 @@ const s = {
   panelBody: { padding: 16, background: "var(--xp-window)" },
   tailButton: { background: "transparent", border: "none", color: "var(--xp-text-faint)", fontSize: 11, padding: "2px 6px" },
 
-  // ---- window control buttons (_ □ ×) ----
   winBtnRow: { display: "flex", gap: 2 },
   winBtn: {
     width: 19, height: 17, display: "inline-flex", alignItems: "center", justifyContent: "center",
@@ -1596,7 +2230,6 @@ const s = {
   },
   winBtnClose: { background: "linear-gradient(180deg, #F1958A, #D8382A)", borderColor: "#A81D12" },
 
-  // ---- forms ----
   form: { display: "flex", flexDirection: "column", gap: 14 },
   label: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11.5, color: "var(--xp-text-dim)", fontWeight: 700 },
   input: {
@@ -1637,9 +2270,8 @@ const s = {
   },
   resultOk: { background: "var(--xp-green-dim)", border: "1px solid #9FCB9F", color: "#1F5F1F", borderRadius: 2, padding: "8px 11px", fontSize: 12 },
   resultError: { background: "var(--xp-red-dim)", border: "1px solid #E3A79E", color: "#8A1F13", borderRadius: 2, padding: "8px 11px", fontSize: 12 },
-  noteBox: { fontSize: 11, color: "var(--xp-text-faint)", background: "var(--xp-window-light)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "8px 10px", lineHeight: 1.5 },
+  noteBox: { fontSize: 11, color: "var(--xp-text-dim)", background: "var(--xp-window-light)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "8px 10px", lineHeight: 1.5 },
 
-  // ---- log feed (Action History) ----
   empty: { color: "var(--xp-text-faint)", fontSize: 12, padding: "20px 0", textAlign: "center" },
   listHeaderRow: {
     display: "flex", gap: 10, padding: "4px 6px", fontSize: 10.5, fontWeight: 700,
@@ -1656,7 +2288,6 @@ const s = {
   logDelivery: { color: "var(--xp-text-faint)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "0 6px" },
   logReason: { color: "var(--xp-text-faint)", fontStyle: "italic", width: "100%", fontSize: 11 },
 
-  // ---- login ----
   loginWrap: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 },
   loginPanel: {
     width: "100%", maxWidth: 380, background: "var(--xp-window)",
@@ -1676,11 +2307,10 @@ const s = {
   loginPrompt: { fontSize: 11.5, color: "var(--xp-text-dim)", marginBottom: 16 },
   footnote: { marginTop: 18, fontSize: 10.5, color: "var(--xp-text-faint)", textAlign: "center" },
 
-  // ---- status bar (bottom of window) ----
   statusBar: {
     display: "flex", alignItems: "center", gap: 0,
     borderTop: "1px solid var(--xp-bevel-light)", background: "var(--xp-window)",
-    padding: "3px 6px",
+    padding: "3px 6px", marginTop: "auto",
   },
   statusBarCell: {
     fontSize: 10.5, color: "var(--xp-text-dim)", padding: "2px 10px",
@@ -1762,7 +2392,6 @@ const pd = {
   invItem: { fontSize: 11.5, color: "var(--xp-text-dim)", background: "var(--xp-window-light)", border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, padding: "6px 8px" },
   invEmpty: { fontSize: 11.5, color: "var(--xp-text-faint)", padding: "10px", fontStyle: "italic" },
 
-  // ---- held-item rows inside an inventory category ----
   heldList: { display: "flex", flexDirection: "column", gap: 5 },
   heldRow: {
     display: "grid",
@@ -1802,7 +2431,6 @@ const pd = {
     boxShadow: "inset 1px 1px 0 #FFF6F5",
   },
 
-  // ---- "grant new" row ----
   addRowWrap: {
     display: "flex",
     flexDirection: "column",
@@ -1853,7 +2481,39 @@ const pd = {
   dossierFooter: { padding: "4px 18px 20px", display: "flex", justifyContent: "flex-end", gap: 10 },
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+// =========================================================
+// Moderation styles
+// =========================================================
+const md = {
+  wrap: { display: "flex", flexDirection: "column", gap: 14, padding: "16px 20px 30px", maxWidth: 900 },
+  searchRow: { display: "flex", gap: 8, alignItems: "center" },
+  summaryBox: {
+    display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", padding: 14,
+    background: "var(--xp-window)", border: "1px solid #A99060", borderRadius: 3,
+    boxShadow: "1px 1px 0 rgba(0,0,0,0.15)",
+  },
+  portrait: { width: 64, height: 64, objectFit: "cover", border: "2px solid #A99060", borderRadius: 2, background: "var(--xp-field)" },
+  chipRow: { display: "flex", gap: 6, flexWrap: "wrap" },
+  chip: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "2px 8px" },
+  list: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 560, overflowY: "auto" },
+  card: { border: "1px solid var(--xp-bevel-shadow)", borderRadius: 2, background: "var(--xp-window-light)", padding: "9px 11px", display: "flex", flexDirection: "column", gap: 5 },
+  cardTop: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" },
+  badge: { fontSize: 10.5, fontWeight: 700, border: "1px solid", borderRadius: 2, padding: "1px 8px" },
+  incId: { fontSize: 11, color: "var(--xp-text-dim)", fontFamily: "monospace" },
+  time: { fontSize: 10.5, color: "var(--xp-text-faint)", marginLeft: "auto" },
+  target: { fontSize: 12, display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" },
+  dim: { color: "var(--xp-text-faint)" },
+  linkBtn: { background: "transparent", border: "none", color: "var(--xp-text-link)", textDecoration: "underline", fontSize: 11, padding: "0 6px" },
+  reason: { fontSize: 12.5, color: "var(--xp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+  meta: { display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11, color: "var(--xp-text-dim)" },
+  notes: { fontSize: 11, color: "var(--xp-text-faint)", fontStyle: "italic", whiteSpace: "pre-wrap", wordBreak: "break-word" },
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
 
 </script>
 </body>
